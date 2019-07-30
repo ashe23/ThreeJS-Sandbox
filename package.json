@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "gulp-concat": "^2.6.1",
     "gulp-watch": "^5.0.1",
     "http-server": "^0.11.1",
     "three": "^0.101.1"
