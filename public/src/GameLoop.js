@@ -8,6 +8,7 @@ export class GameLoop {
         this.renderer = {};
         this.controls = {};
         this.clock = {};
+        this.initCallback = () => {};
     }
 
     init() {
@@ -18,12 +19,17 @@ export class GameLoop {
         this.controls = new THREE.TrackballControls(this.camera);
         this.clock = new THREE.Clock();
         this.renderer.setSize(GameConfigs.RendererSettings.windowWidth, GameConfigs.RendererSettings.windowHeight);
+        this.renderer.setPixelRatio( window.devicePixelRatio );
+        this.renderer.gammaOutput = true;
+
 
         // scene background setup
         this.scene.background = new THREE.Color(GameConfigs.RendererSettings.sceneColor);
         this.camera.position.z = 120;
         this.camera.position.y = 20;
         document.body.appendChild(this.renderer.domElement);
+
+        this.initCallback();
 
         if (GameConfigs.RendererSettings.drawGridLines) {
             let grid = new THREE.GridHelper(100, 20, 0x444444, 0xff0000);

@@ -8,7 +8,7 @@ let GameConfigs = {
     RendererSettings: {
         windowWidth: window.innerWidth,
         windowHeight: window.innerHeight,
-        sceneColor: 0xd3d3d3,
+        sceneColor: 0x000000,
         drawGridLines: true
     }
 };

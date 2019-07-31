@@ -6,6 +6,7 @@ gulp.task('build', function () {
         'node_modules/three/build/three.min.js',
         'node_modules/three/examples/js/loaders/*.js',
         'node_modules/three/examples/js/controls/*.js',
+        'node_modules/three/examples/js/pmrem/*.js',
         'public/src/*.js',
         'public/main.js'
     ])
