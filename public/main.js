@@ -1,4 +1,5 @@
 import { GameLoop } from './GameLoop.js';
+import { ModelLoader } from './ModelLoader.js';
 
 function OnDocumentLoad() {
     let GL = new GameLoop();
@@ -32,17 +33,17 @@ function OnDocumentLoad() {
 
         let textureLoader = new THREE.TextureLoader();
         const TexturePath = "models/Textures/";
-        const TextureName = 'StoneBricksBeige015_';
+        const TextureName = 'WoodFlooring044_';
         const textureCOL = textureLoader.load(TexturePath + TextureName + 'COL_4k.jpg');
         const textureNRM = textureLoader.load(TexturePath + TextureName + 'NRM_4k.jpg');
-        const textureAO = textureLoader.load(TexturePath + TextureName + 'AO_4k.jpg');
+        // const textureAO = textureLoader.load(TexturePath + TextureName + 'AO_4k.jpg');
         const textureDISP = textureLoader.load(TexturePath + TextureName + 'DISP_4k.jpg');
         const textureGLOSS = textureLoader.load(TexturePath + TextureName + 'GLOSS_4k.jpg');
 
 
 
         textureCOL.encoding = THREE.sRGBEncoding;
-        textureAO.encoding = THREE.sRGBEncoding;
+        // textureAO.encoding = THREE.sRGBEncoding;
         textureNRM.encoding = THREE.LinearEncoding;
         textureDISP.encoding = THREE.sRGBEncoding;
         textureGLOSS.encoding = THREE.sRGBEncoding;
@@ -51,9 +52,9 @@ function OnDocumentLoad() {
         let material = new THREE.MeshStandardMaterial({
             map: textureCOL,
             normalMap: textureNRM,
-            aoMap: textureAO,
-            displacementMap: textureDISP,
-            displacementScale: 5,
+            // aoMap: textureAO,
+            // displacementMap: textureDISP,
+            // displacementScale: 0.001,
             metalnessMap: textureGLOSS,
             metalness: 0,
             roughness: 0.8
@@ -62,24 +63,41 @@ function OnDocumentLoad() {
         // var spotLight = new THREE.SpotLight( 0xffffff );
         // spotLight.position.set(0, 200, 300);
         // spotLight.castShadow = true;
-        // GL.scene.add(spotLight);
+        // GL.scene.add(spotLight );
+
+        let CubeModel = ModelLoader.load('models/', 'Floor.glb', material);
+        CubeModel.then((mesh) => {
+            console.log(mesh);
+            let helper = new THREE.VertexNormalsHelper( mesh, 10, 0x00ff00, 10 );
+            GL.scene.add(mesh);
+            GL.scene.add(helper);
+        }, (error) => {
+            console.log(error);
+        });
+
+        // let RouletteModel = ModelLoader.load('models/', 'Roulette.glb', undefined, new THREE.Vector3(0.01, 0.01, 0.01));
+        // RouletteModel.then((mesh) => {
+        //     GL.scene.add(mesh);
+        // }, (error) => {
+        //     console.log(error);
+        // });
 
         // var material = new THREE.MeshLambertMaterial({ color: 0x00ff00, envMap: refractionCube, refractionRatio: 0.95 });
-        var loader = new THREE.GLTFLoader().setPath('models/');
-        loader.load('cube.glb', function (gltf) {
-            // gltf.scene.scale.set(0.1, 0.1, 0.1);
-            console.log(gltf.scene);
-            gltf.scene.traverse(function (child) {
+        // var loader = new THREE.GLTFLoader().setPath('models/');
+        // loader.load('cube.glb', function (gltf) {
+        //     // gltf.scene.scale.set(0.1, 0.1, 0.1);
+        //     console.log(gltf.scene);
+        //     gltf.scene.traverse(function (child) {
 
-                if (child.isMesh) {
-                    child.material = material;
-                }
+        //         if (child.isMesh) {
+        //             child.material = material;
+        //         }
 
-            });
+        //     });
 
-            GL.scene.add(gltf.scene);
+        //     GL.scene.add(gltf.scene);
 
-        });
+        // });
     }
     GL.init();
     GL.animate();
