@@ -22,7 +22,7 @@ function OnDocumentLoad() {
 
         //lights
         var ambient = new THREE.AmbientLight(0x404040);
-        // GL.scene.add(ambient);
+        GL.scene.add(ambient);
 
         var pointLight = new THREE.PointLight(0xffffff, 2);
         pointLight.position.set(200, 100, 500);
@@ -57,7 +57,11 @@ function OnDocumentLoad() {
             // displacementScale: 0.001,
             metalnessMap: textureGLOSS,
             metalness: 0,
-            roughness: 0.8
+            roughness: 0.8,
+            side: THREE.DoubleSide,
+            depthFunc: THREE.AlwaysDepth,
+            depthTest: true,
+            depthWrite: true
         });
 
         // var spotLight = new THREE.SpotLight( 0xffffff );
@@ -65,15 +69,25 @@ function OnDocumentLoad() {
         // spotLight.castShadow = true;
         // GL.scene.add(spotLight );
 
-        let CubeModel = ModelLoader.load('models/', 'Floor.glb', material);
-        CubeModel.then((mesh) => {
-            console.log(mesh);
-            let helper = new THREE.VertexNormalsHelper( mesh, 10, 0x00ff00, 10 );
-            GL.scene.add(mesh);
-            GL.scene.add(helper);
-        }, (error) => {
-            console.log(error);
-        });
+
+        // let helper = new THREE.FaceNormalsHelper(box, 2);
+        // GL.vnh = helper;
+        // GL.scene.add(box);
+        // GL.scene.add(GL.vnh);
+        // var material = new THREE.MeshLambertMaterial({ color: 0x00ff00, envMap: refractionCube, refractionRatio: 0.95 });
+        // let CubeModel = ModelLoader.load('models/', 'Roulette.glb', material);
+        // CubeModel.then((mesh) => {
+        //     let threeMesh = mesh.children[0].children[0];
+        //     console.log(threeMesh);
+        // let helper = new THREE.FaceNormalsHelper(threeMesh, 2);
+        // GL.vnh = helper;
+        // GL.scene.add(mesh);
+        // GL.scene.add(GL.vnh);
+        //     // GL.vnh = new THREE.FaceNormalsHelper( mesh.children[0].children[0], 5 );
+        //     // GL.scene.add(GL.vnh);
+        // }, (error) => {
+        //     console.log(error);
+        // });
 
         // let RouletteModel = ModelLoader.load('models/', 'Roulette.glb', undefined, new THREE.Vector3(0.01, 0.01, 0.01));
         // RouletteModel.then((mesh) => {
@@ -82,22 +96,35 @@ function OnDocumentLoad() {
         //     console.log(error);
         // });
 
-        // var material = new THREE.MeshLambertMaterial({ color: 0x00ff00, envMap: refractionCube, refractionRatio: 0.95 });
-        // var loader = new THREE.GLTFLoader().setPath('models/');
-        // loader.load('cube.glb', function (gltf) {
-        //     // gltf.scene.scale.set(0.1, 0.1, 0.1);
-        //     console.log(gltf.scene);
-        //     gltf.scene.traverse(function (child) {
+        var loader = new THREE.GLTFLoader().setPath('models/');
+        loader.load('Roulette.glb', function (gltf) {
+            let mesh = gltf.scene.children[0];
+            let meshGeo = mesh.children[0].geometry;
+            let threeMesh = new THREE.Mesh(meshGeo, material);
+            // let helper = new THREE.VertexNormalsHelper(threeMesh, 10);
+            GL.scene.add(gltf.scene);
+            // GL.scene.add(helper);
 
-        //         if (child.isMesh) {
-        //             child.material = material;
-        //         }
+            console.log(mesh, threeMesh);
+        });
 
-        //     });
+        var FizzyText = function () {
+            this.message = 'dat.gui';
+            this.ss = 0.8;
+            this.displayOutline = false;
+            this.explode = function () { };
+            // Define render logic ...
+        };
 
-        //     GL.scene.add(gltf.scene);
+        var text = new FizzyText();
+        var gui = new dat.GUI();
+        gui.add(text, 'message');
+        gui.add(text, 'ss', -5, 5).onChange(function () {
+            console.log('test');
+        });
+        gui.add(text, 'displayOutline');
+        gui.add(text, 'explode');
 
-        // });
     }
     GL.init();
     GL.animate();

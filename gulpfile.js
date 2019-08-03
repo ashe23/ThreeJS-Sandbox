@@ -8,6 +8,8 @@ gulp.task('build', function () {
         'node_modules/three/examples/js/controls/*.js',
         'node_modules/three/examples/js/pmrem/*.js',
         'node_modules/three/src/helpers/VertexNormalsHelper.js',
+        'node_modules/dat.gui/build/dat.gui.min.js',
+        'node_modules/stats.js/build/stats.min.js',
         'public/src/*.js',
         'public/main.js'
     ])

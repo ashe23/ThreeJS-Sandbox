@@ -8,7 +8,9 @@ export class GameLoop {
         this.renderer = {};
         this.controls = {};
         this.clock = {};
-        this.initCallback = () => {};
+        this.vnh = {};
+        this.stats = {};
+        this.initCallback = () => { };
     }
 
     init() {
@@ -16,18 +18,29 @@ export class GameLoop {
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(GameConfigs.CameraSettings.fov, GameConfigs.CameraSettings.aspectRatio, GameConfigs.CameraSettings.far, GameConfigs.CameraSettings.near);
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
-        this.controls = new THREE.TrackballControls(this.camera);
-        this.clock = new THREE.Clock();
         this.renderer.setSize(GameConfigs.RendererSettings.windowWidth, GameConfigs.RendererSettings.windowHeight);
-        this.renderer.setPixelRatio( window.devicePixelRatio );
+        this.renderer.setPixelRatio(window.devicePixelRatio);
         this.renderer.gammaOutput = true;
+        document.body.appendChild(this.renderer.domElement);
+        this.controls = new THREE.TrackballControls(this.camera, this.renderer.domElement);
+        this.controls.noZoom = false;
+        this.controls.noPan = false;
+        this.controls.addEventListener('change', () => this.render());
+        // this.controls.staticMoving = true;
+        this.clock = new THREE.Clock();
+
+        this.stats = new Stats();
+        this.stats.showPanel(0);
+        document.body.appendChild(this.stats.dom);
+
+
+        // this.vnh = new THREE.VertexNormalsHelper( mesh, 10, 0x00ff00, 10 );
 
 
         // scene background setup
         this.scene.background = new THREE.Color(GameConfigs.RendererSettings.sceneColor);
         this.camera.position.z = 120;
         this.camera.position.y = 20;
-        document.body.appendChild(this.renderer.domElement);
 
         this.initCallback();
 
@@ -42,8 +55,24 @@ export class GameLoop {
     }
 
     animate() {
-        requestAnimationFrame(() => this.animate());
+        
+        this.stats.begin();
+
+
+        if(!(Object.keys(this.vnh).length === 0 && this.vnh.constructor === Object)) 
+        {
+            this.vnh.update();
+        }
+        
         this.controls.update();
+        this.render();
+
+        this.stats.end();
+
+        requestAnimationFrame(() => this.animate());
+    }
+
+    render() {
         this.renderer.render(this.scene, this.camera);
     }
 

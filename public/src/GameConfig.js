@@ -1,9 +1,9 @@
 let GameConfigs = {
     CameraSettings: {
-        fov: 95,
+        fov: 50,
         aspectRation: window.innerWidth / window.innerHeight,
-        near: 1,
-        far: 2000
+        near: 0.1,
+        far: 10000
     },
     RendererSettings: {
         windowWidth: window.innerWidth,
