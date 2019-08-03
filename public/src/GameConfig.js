@@ -9,7 +9,7 @@ let GameConfigs = {
         windowWidth: window.innerWidth,
         windowHeight: window.innerHeight,
         sceneColor: 0x000000,
-        drawGridLines: false
+        drawGridLines: true
     }
 };
 export { GameConfigs };

@@ -1,32 +1,21 @@
 import { GameLoop } from './GameLoop.js';
 import { ModelLoader } from './ModelLoader.js';
+import { CubeMapLoader } from './CubeMapLoader.js';
 
 function OnDocumentLoad() {
     let GL = new GameLoop();
     GL.initCallback = function () {
-        var path = 'textures/';
-        var format = '.jpg';
-        var urls = [
-            path + 'right' + format, path + 'left' + format,
-            path + 'top' + format, path + 'bottom' + format,
-            path + 'front' + format, path + 'back' + format
-        ];
-        var reflectionCube = new THREE.CubeTextureLoader().load(urls);
-        reflectionCube.format = THREE.RGBFormat;
-
-        var refractionCube = new THREE.CubeTextureLoader().load(urls);
-        refractionCube.mapping = THREE.CubeRefractionMapping;
-        refractionCube.format = THREE.RGBFormat;
-
-        GL.scene.background = reflectionCube;
+        let urls = ['right', 'left', 'top', 'bottom', 'front', 'back'];
+        GL.scene.background = CubeMapLoader.draw('textures/', urls, '.jpg');
 
         //lights
-        var ambient = new THREE.AmbientLight(0x404040);
+        var ambient = new THREE.AmbientLight(0xffffff);
         GL.scene.add(ambient);
 
-        var pointLight = new THREE.PointLight(0xffffff, 2);
-        pointLight.position.set(200, 100, 500);
-        pointLight.intensity = 1;
+        var pointLight = new THREE.DirectionalLight( 0xFFFFFF, 0.3 );
+        pointLight.castShadow = true;
+        pointLight.position.set(200, 500, 0);
+        pointLight.intensity = 2;
         pointLight.decay = 2;
         GL.scene.add(pointLight);
 
@@ -58,54 +47,28 @@ function OnDocumentLoad() {
             metalnessMap: textureGLOSS,
             metalness: 0,
             roughness: 0.8,
-            side: THREE.DoubleSide,
-            depthFunc: THREE.AlwaysDepth,
+            // depthFunc: THREE.AlwaysDepth,
             depthTest: true,
             depthWrite: true
         });
-
-        // var spotLight = new THREE.SpotLight( 0xffffff );
-        // spotLight.position.set(0, 200, 300);
-        // spotLight.castShadow = true;
-        // GL.scene.add(spotLight );
-
-
-        // let helper = new THREE.FaceNormalsHelper(box, 2);
-        // GL.vnh = helper;
-        // GL.scene.add(box);
-        // GL.scene.add(GL.vnh);
-        // var material = new THREE.MeshLambertMaterial({ color: 0x00ff00, envMap: refractionCube, refractionRatio: 0.95 });
-        // let CubeModel = ModelLoader.load('models/', 'Roulette.glb', material);
-        // CubeModel.then((mesh) => {
-        //     let threeMesh = mesh.children[0].children[0];
-        //     console.log(threeMesh);
-        // let helper = new THREE.FaceNormalsHelper(threeMesh, 2);
-        // GL.vnh = helper;
-        // GL.scene.add(mesh);
-        // GL.scene.add(GL.vnh);
-        //     // GL.vnh = new THREE.FaceNormalsHelper( mesh.children[0].children[0], 5 );
-        //     // GL.scene.add(GL.vnh);
-        // }, (error) => {
-        //     console.log(error);
-        // });
-
-        // let RouletteModel = ModelLoader.load('models/', 'Roulette.glb', undefined, new THREE.Vector3(0.01, 0.01, 0.01));
-        // RouletteModel.then((mesh) => {
-        //     GL.scene.add(mesh);
+        var meshMaterial = new THREE.MeshPhongMaterial({color: 0x7777ff});
+        // let RouletteModel = ModelLoader.load('models/', 'Susan.glb', material, new THREE.Vector3(0.01, 0.01, 0.01));
+        // RouletteModel.then((object) => {
+        //     GL.scene.add(object.scene);
         // }, (error) => {
         //     console.log(error);
         // });
 
         var loader = new THREE.GLTFLoader().setPath('models/');
-        loader.load('Roulette.glb', function (gltf) {
-            let mesh = gltf.scene.children[0];
-            let meshGeo = mesh.children[0].geometry;
-            let threeMesh = new THREE.Mesh(meshGeo, material);
-            // let helper = new THREE.VertexNormalsHelper(threeMesh, 10);
+        loader.load('Susan.glb', function (gltf) {
+            // let mesh = gltf.scene.children[0];
+            // let meshGeo = mesh.children[0].geometry;
+            // let threeMesh = new THREE.Mesh(meshGeo);
+            // let helper = new THREE.VertexNormalsHelper(threeMesh, 0.2);
             GL.scene.add(gltf.scene);
             // GL.scene.add(helper);
 
-            console.log(mesh, threeMesh);
+            // console.log(mesh, threeMesh);
         });
 
         var FizzyText = function () {

@@ -17,7 +17,7 @@ export class GameLoop {
         // initializing Core components
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(GameConfigs.CameraSettings.fov, GameConfigs.CameraSettings.aspectRatio, GameConfigs.CameraSettings.far, GameConfigs.CameraSettings.near);
-        this.renderer = new THREE.WebGLRenderer({ antialias: true });
+        this.renderer = new THREE.WebGLRenderer();
         this.renderer.setSize(GameConfigs.RendererSettings.windowWidth, GameConfigs.RendererSettings.windowHeight);
         this.renderer.setPixelRatio(window.devicePixelRatio);
         this.renderer.gammaOutput = true;

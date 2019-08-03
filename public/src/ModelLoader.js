@@ -35,7 +35,7 @@ export class ModelLoader {
 
                 }
                 else {
-                    resolve(gltf.scene);
+                    resolve(gltf);
                 }
             });
         });
