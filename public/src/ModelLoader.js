@@ -21,12 +21,21 @@ export class ModelLoader {
         // return model;
         const myPromise = new Promise((resolve, reject) => {
             let loader = new THREE.GLTFLoader().setPath(path);
-            loader.load(model_name, function (gltf) {
+            loader.load(model_name, function (gltf) {   
+                // GL.animationMixer = new THREE.AnimationMixer(mesh.scene);
+                // let clip = THREE.AnimationClip.findByName(mesh.animations, 'Dance');
+                // let action = GL.animationMixer.clipAction(clip);
+                // action.reset();
+                // action.paused = false;
+                // action.play();
+                // console.log(clip);             
                 gltf.scene.scale.copy(scale);
                 gltf.scene.traverse(function (child) {
 
                     if (child.isMesh) {
                         child.material = material;
+                        child.material.side = THREE.DoubleSide;
+                        child.receiveShadow = true;
                     }
 
                 });

@@ -11,6 +11,7 @@ gulp.task('build', function () {
         'node_modules/dat.gui/build/dat.gui.min.js',
         'node_modules/stats.js/build/stats.min.js',
         'public/src/*.js',
+        'public/src/Core/*.js',
         'public/main.js'
     ])
         .pipe(gulp.dest('public/build/'));
@@ -23,7 +24,7 @@ gulp.task('clean', function () {
 
 gulp.task('watch', function()
 {
-    return gulp.watch(['public/main.js','public/src/*.js'], gulp.series('clean', 'build'));
+    return gulp.watch(['public/main.js','public/src/*.js', 'public/src/Core/*.js'], gulp.series('clean', 'build'));
 });
 
 gulp.task('default', gulp.parallel('build', 'watch'));

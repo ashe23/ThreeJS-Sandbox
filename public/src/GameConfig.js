@@ -1,15 +1,23 @@
 let GameConfigs = {
+    CoreSettings: {
+        windowWidth: window.innerWidth,
+        windowHeight: window.innerHeight,
+    },
     CameraSettings: {
         fov: 50,
         aspectRation: window.innerWidth / window.innerHeight,
         near: 0.1,
-        far: 10000
+        far: 10000,
     },
     RendererSettings: {
-        windowWidth: window.innerWidth,
-        windowHeight: window.innerHeight,
+        canvas: document.querySelector('#c'),
+        antialias: true,
+    },
+    Helpers: {
         sceneColor: 0x000000,
-        drawGridLines: true
+        drawAxisHelper: true,
+        drawGridLines: true,
+        doubleCameraMode: false
     }
 };
 export { GameConfigs };
