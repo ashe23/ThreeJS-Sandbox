@@ -29,6 +29,7 @@ export class GameLoop {
     init() {
         // initializing Core components
 
+      
         this.setupScene();
         this.setupRenderer();
         this.setupCamera();
@@ -53,8 +54,10 @@ export class GameLoop {
 
         this.setupConfigs();
 
-        // window.addEventListener('resize', () => this.OnWindowResize(), false);
-        // this.OnWindowResize();
+        if (!GameConfigs.Helpers.doubleCameraMode) {
+            window.addEventListener('resize', () => this.OnWindowResize(), false);
+            this.OnWindowResize();
+        }
     }
 
     animate() {
@@ -75,7 +78,6 @@ export class GameLoop {
         this.animateCallback();
 
 
-        // this.controls.update();
         this.render();
 
         this.stats.end();
@@ -84,17 +86,14 @@ export class GameLoop {
     }
 
     render() {
-        this.resizeRendererToDisplaySize();
 
         if (GameConfigs.Helpers.doubleCameraMode) {
+            this.resizeRendererToDisplaySize();
             this.DoubleCameraSetup();
         }
         else {
             this.SingleCameraSetup();
         }
-
-        // requestAnimationFrame(this.render);
-        // this.renderer.render(this.scene, this.camera);
     }
 
     DoubleCameraSetup() {
@@ -225,11 +224,11 @@ export class GameLoop {
         }
         else {
             this.camera = new THREE.PerspectiveCamera(60, 2, 0.1, 500);
-            this.camera.position.set(16, 28, 40);
-            this.camera.lookAt(0, 5, 0);
+            this.camera.position.set(8, 14, 20);
+            // this.camera.lookAt(0, 5, 0);
 
             this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
-            // this.controls.target.set(0, 5, 0);
+            this.controls.addEventListener('change', () => this.render());
             this.controls.update();
         }
     }
