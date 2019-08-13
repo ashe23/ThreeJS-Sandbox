@@ -4,135 +4,139 @@ import { CubeMapLoader } from './CubeMapLoader.js';
 import { TextureToSpriteLoader } from "./SpriteLoader.js";
 
 function OnDocumentLoad() {
-    let GL = new GameLoop();
 
-    GL.initCallback = function () {
+    let GL = new GameLoop();
+    let roulette, renderTarget, rtScene, rtCamera, mirrorCubeCamera;
+    const rtWidth = 512;
+    const rtHeight = 512;
+    GL.initCallback = () => {
+
+        renderTarget = new THREE.WebGLRenderTarget(rtWidth, rtHeight);
+        rtCamera = new THREE.PerspectiveCamera(60, rtWidth / rtHeight, 0.1, 5000);
+        rtCamera.position.z = 2;
+        rtScene = new THREE.Scene();
+        rtScene.background = new THREE.Color('red');
+        {
+            const color = 0xFFFFFF;
+            const intensity = 1;
+            const light = new THREE.DirectionalLight(color, intensity);
+            light.position.set(-1, 2, 4);
+            rtScene.add(light);
+
+            const boxWidth = 1;
+            const boxHeight = 1;
+            const boxDepth = 1;
+            const geometry = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
+            const material = new THREE.MeshPhongMaterial({ color });
+            const cube = new THREE.Mesh(geometry, material);
+            rtScene.add(cube);
+        }
+
+        console.log(renderTarget.texture);
+        let RenderTargetMaterial = new THREE.MeshBasicMaterial({
+            envMap: GL.camera.renderTarget
+        });
         // const TexturePath = "models/Textures/";
         // let urls = ['right', 'left', 'top', 'bottom', 'front', 'back'];
-        // let textureLoader = new THREE.TextureLoader();
         // let bg = textureLoader.load(TexturePath + 'bg.jpg');
+        let textureLoader = new THREE.TextureLoader();
+        let backgroundTexture = textureLoader.load('textures/bg.png');
+        GL.scene.background = backgroundTexture;
+        // let hemiLight = new THREE.HemisphereLight( 0xffffff, 0x444444 );
+        // hemiLight.position.set( 0, 20, 0 );
+        // GL.scene.add( hemiLight );
 
-        let torusKnotGeometry = new THREE.TorusGeometry(10, 3, 16, 100);
+        let light = new THREE.PointLight(0xffffff, 1, 100);
+        light.position.set(-2, 7, 5);
+        light.castShadow = true;
+        GL.scene.add(light);
+
+        GL.scene.add(new THREE.PointLightHelper(light));
+
+        light.shadow.mapSize.width = 1024;
+        light.shadow.mapSize.height = 1024;
+        light.shadow.camera.near = 0.5;
+        light.shadow.camera.far = 500;
+
+        // let directionalLight = new THREE.DirectionalLight(0xffffff);
+        // directionalLight.intensity = 0.1;
+        // directionalLight.position.set(-2, 5, 10);
+        // directionalLight.castShadow = true;
+        // directionalLight.shadow.camera.near = 0.1;
+        // directionalLight.shadow.camera.far = 500;
+        // directionalLight.shadow.camera.right = 10;
+        // directionalLight.shadow.camera.left = 10;
+        // directionalLight.shadow.camera.top = 10;
+        // directionalLight.shadow.camera.bottom = 10;
+        // directionalLight.shadow.mapSize.width = 1024;
+        // directionalLight.shadow.mapSize.height = 1024;
+
+        // GL.scene.add(directionalLight);
+
+        // adding plane
+        let planeGeo = new THREE.PlaneBufferGeometry(60, 40, 32);
+        let planeMat = new THREE.MeshStandardMaterial({
+            // side: THREE.DoubleSide,
+            // map: textureCol,
+            // normalMap: textureNRM,
+            // metalness: 0,
+            // roughness: 0.7,
+            // color: 0x00ff00,
+            // depthWrite: false
+        });
+
+
+        let cubeGeom = new THREE.CubeGeometry(100, 100, 10, 1, 1, 1);
+        mirrorCubeCamera = new THREE.CubeCamera(0.1, 5000, 512);
+        GL.scene.add(mirrorCubeCamera);
+
+        roulette = TextureToSpriteLoader.load('textures/test.png', new THREE.Vector3(7, 7, 1));
+        GL.scene.add(roulette);
+        let planeMesh = new THREE.Mesh(planeGeo, RenderTargetMaterial);
+        planeMesh.position.y -= 5;
+        planeMesh.position.z -= 2;
+        planeMesh.rotation.x = -Math.PI / 2;
+        planeMesh.receiveShadow = true;
+        GL.scene.add(planeMesh);
+
         let torusKnotMaterial = new THREE.MeshStandardMaterial({
             roughness: 0,
             transparent: false,
             flatShading: true,
             // side: THREE.DoubleSide
         });
-        let torusKnot = new THREE.Mesh(torusKnotGeometry, torusKnotMaterial);
-        // torusKnot.position.y = 4;
-        torusKnot.scale.set(0.5, 0.5, 0.5);
-        // GL.scene.add( torusKnot );
 
+        console.log(GL);
 
         //lights
-        let directionalLight = new THREE.DirectionalLight();
-        directionalLight.position.set(-10, 10, 0);
-        GL.scene.add(directionalLight);
 
         // light helper
-        let lightHelper = new THREE.DirectionalLightHelper(directionalLight, 2);
-        GL.scene.add(lightHelper);
-        // var spotLight = new THREE.SpotLight(0xFFFFFF, 2);
-        // spotLight.position.set(200, 250, 600);
-        // spotLight.target.position.set(100, -50, 0);
-        // spotLight.castShadow = true;
-        // GL.scene.add(spotLight.target);
-        // GL.scene.add(spotLight);
+        // let lightHelper = new THREE.DirectionalLightHelper(directionalLight, 2);
+        // GL.scene.add(lightHelper);
 
-        // GL.scene.add(TextureToSpriteLoader.load('textures/test.png', new THREE.Vector3(10, 10, 1)));
-        //Set up shadow properties for the spotLight
-        // spotLight.shadow.mapSize.width = 512;  // default
-        // spotLight.shadow.mapSize.height = 512; // default
-        // spotLight.shadow.camera.near = 0.5;    // default
-        // spotLight.shadow.camera.far = 15000;     // default
 
-        // var ambient = new THREE.AmbientLight(0x404040);
+        // let ambient = new THREE.AmbientLight(0x404040);
         // GL.scene.add(ambient);
 
         // end ligths
-        let RouletteModel = ModelLoader.load('models/', 'Dance.glb', torusKnotMaterial, new THREE.Vector3(1, 1, 1));
-        RouletteModel.then((mesh) => {     
-            GL.initializeAnimation(mesh);      
-            GL.scene.add(mesh.scene);
+        let RouletteModel = ModelLoader.load('models/', 'Idle.fbx', torusKnotMaterial, new THREE.Vector3(0.03, 0.03, 0.03));
+        RouletteModel.then((mesh) => {
+            GL.initializeAnimation(mesh);
+            mesh.position.x -= 7.5;
+            mesh.position.y -= 5;
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            // mesh.position.z += 5;
+            mesh.rotation.y += Math.PI / 4;
+            GL.scene.add(mesh);
         }, (error) => {
             console.log(error);
         });
 
+        GL.scene.add(TextureToSpriteLoader.load('textures/5.png', new THREE.Vector3(4, 4, 1)));
+        GL.scene.add(TextureToSpriteLoader.load('textures/1.png', new THREE.Vector3(10.5, 10.5, 1)));
+        GL.scene.add(TextureToSpriteLoader.load('textures/2.png', new THREE.Vector3(9.5, 9.5, 1)));
 
-        // let faceMaterial = new THREE.MeshStandardMaterial({ color: 0x0087E6, depthWrite: false });
-        // let torus = new THREE.Mesh(new THREE.TorusBufferGeometry(20, 10, 16, 64), faceMaterial);
-        // torus.rotation.x = -90 * Math.PI / 180;
-        // torus.castShadow = true;
-        // GL.scene.add(torus);
-
-
-        // let geometry = new THREE.PlaneGeometry(1000, 1000, 32, 32);
-        // var planeMaterial = new THREE.MeshLambertMaterial({ color: 0xb69a77, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
-        // let plane = new THREE.Mesh(geometry, planeMaterial);
-        // plane.position.y -= 20;
-        // plane.rotation.x = - Math.PI / 2;
-        // plane.receiveShadow = true;
-        // GL.scene.add(plane);
-
-
-        GL.scene.background = new THREE.Color('#7e9ed9');
-
-
-
-
-
-        // var pointLight = new THREE.PointLight(0xFFFFFF, 5);
-        // pointLight.castShadow = true;
-        // pointLight.position.set(20, 20, 0);
-        // // pointLight.intensity = 2;
-        // // pointLight.decay = 2;
-        // GL.scene.add(pointLight);
-        // GL.scene.add(new THREE.PointLightHelper(pointLight, 2));
-
-
-        // const TextureName = 'WoodFlooring044_';
-        // const textureCOL = textureLoader.load(TexturePath + TextureName + 'COL_4k.jpg');
-        // const textureNRM = textureLoader.load(TexturePath + TextureName + 'NRM_4k.jpg');
-        // // const textureAO = textureLoader.load(TexturePath + TextureName + 'AO_4k.jpg');
-        // const textureDISP = textureLoader.load(TexturePath + TextureName + 'DISP_4k.jpg');
-        // const textureGLOSS = textureLoader.load(TexturePath + TextureName + 'GLOSS_4k.jpg');
-
-
-
-        // textureCOL.encoding = THREE.sRGBEncoding;
-        // textureAO.encoding = THREE.sRGBEncoding;
-        // textureNRM.encoding = THREE.LinearEncoding;
-        // textureDISP.encoding = THREE.sRGBEncoding;
-        // textureGLOSS.encoding = THREE.sRGBEncoding;
-        // textureCOL.anisotropy = 16;
-
-        // let material = new THREE.MeshStandardMaterial({
-        //     map: textureCOL,
-        //     normalMap: textureNRM,
-        //     // aoMap: textureAO,
-        //     // displacementMap: textureDISP,
-        //     // displacementScale: 0.001,
-        //     metalnessMap: textureGLOSS,
-        //     metalness: 0,
-        //     roughness: 0.8,
-        //     // depthFunc: THREE.AlwaysDepth,
-        //     depthTest: true,
-        //     depthWrite: true
-        // });
-        // var meshMaterial = new THREE.MeshPhongMaterial({ color: 0x7777ff });
-
-        // var loader = new THREE.GLTFLoader().setPath('models/');
-        // loader.load('Susan.glb', function (gltf) {
-        //     // let mesh = gltf.scene.children[0];
-        //     // let meshGeo = mesh.children[0].geometry;
-        //     // let threeMesh = new THREE.Mesh(meshGeo);
-        //     // let helper = new THREE.VertexNormalsHelper(threeMesh, 0.2);
-        //     GL.scene.add(gltf.scene);
-        //     // GL.scene.add(helper);
-
-        //     // console.log(mesh, threeMesh);
-        // });
 
         // var FizzyText = function () {
         //     this.message = 'dat.gui';
@@ -156,8 +160,13 @@ function OnDocumentLoad() {
         // });
 
     }
-    GL.animateCallback = function () {
+    GL.animateCallback = () => {
+        roulette.material.rotation -= Math.PI / 256;
 
+        GL.renderer.setRenderTarget(renderTarget);
+        GL.renderer.render(rtScene, rtCamera);
+        // mirrorCubeCamera.updateCubeMap( GL.renderer, GL.scene );
+        // console.log(renderTarget);
     }
     GL.init();
     GL.animate();

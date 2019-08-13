@@ -15,8 +15,8 @@ let GameConfigs = {
     },
     Helpers: {
         sceneColor: 0x000000,
-        drawAxisHelper: true,
-        drawGridLines: true,
+        drawAxisHelper: false,
+        drawGridLines: false,
         doubleCameraMode: false
     }
 };

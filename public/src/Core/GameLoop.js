@@ -2,7 +2,7 @@ import { GameConfigs } from './GameConfig.js';
 
 const size = 1;
 const near = 5;
-const far = 50;
+const far = 500;
 const canvas = document.querySelector('#c');
 const view1Elem = document.querySelector('#view1');
 const view2Elem = document.querySelector('#view2');
@@ -29,7 +29,7 @@ export class GameLoop {
     init() {
         // initializing Core components
 
-      
+
         this.setupScene();
         this.setupRenderer();
         this.setupCamera();
@@ -54,16 +54,15 @@ export class GameLoop {
 
         this.setupConfigs();
 
-        if (!GameConfigs.Helpers.doubleCameraMode) {
-            window.addEventListener('resize', () => this.OnWindowResize(), false);
-            this.OnWindowResize();
-        }
+        // if (!GameConfigs.Helpers.doubleCameraMode) {
+        //     window.addEventListener('resize', () => this.OnWindowResize(), false);
+        //     this.OnWindowResize();
+        // }
     }
 
     animate() {
 
         this.stats.begin();
-
 
         if (!(Object.keys(this.vnh).length === 0 && this.vnh.constructor === Object)) {
             this.vnh.update();
@@ -72,11 +71,11 @@ export class GameLoop {
         if (!(Object.keys(this.animationMixer).length === 0 && this.animationMixer.constructor === Object)) {
             this.animationMixer.update(this.clock.getDelta());
         }
-        // this.camera.lookAt(this.scene.position);
 
         // user defined logic that should be executed in animate function
         this.animateCallback();
 
+        this.resizeRendererToDisplaySize();
 
         this.render();
 
@@ -108,7 +107,7 @@ export class GameLoop {
             this.cameraHelper.update();
             // don't draw the camera helper in the original view
             this.cameraHelper.visible = false;
-            this.scene.background.set(0x808080);
+            // this.scene.background.set(0x808080);
             this.renderer.render(this.scene, this.camera1);
         }
         // render from the 2nd camera
@@ -119,7 +118,7 @@ export class GameLoop {
             this.camera2.updateProjectionMatrix();
             // draw the camera helper in the 2nd view
             this.cameraHelper.visible = true;
-            this.scene.background.set(0x888083);
+            // this.scene.background.set(0x888083);
             this.renderer.render(this.scene, this.camera2);
         }
     }
@@ -169,11 +168,13 @@ export class GameLoop {
         this.controls1.update();
     }
     resizeRendererToDisplaySize() {
-        const canvas = this.renderer.domElement;
+        const canvas = document.querySelector('#canvas');
         const width = canvas.clientWidth;
         const height = canvas.clientHeight;
         const needResize = canvas.width !== width || canvas.height !== height;
         if (needResize) {
+            this.camera.aspect = width / height;
+            this.camera.updateProjectionMatrix();
             this.renderer.setSize(width, height, false);
         }
         return needResize;
@@ -201,21 +202,27 @@ export class GameLoop {
     }
 
     initializeAnimation(mesh) {
-        this.animationMixer = new THREE.AnimationMixer(mesh.scene);
-        // debugger;
+        this.animationMixer = new THREE.AnimationMixer(mesh);
         let clips = mesh.animations;
-
-        let clip = THREE.AnimationClip.findByName(clips, 'Dance');
-        let action = this.animationMixer.clipAction(clip);
-        action.play();
+        // this.scene.add(new THREE.SkeletonHelper(mesh));
+        mesh.animations.forEach((clip) => {
+            this.animationMixer.clipAction(clip).play();
+        });
+        // let clip = THREE.AnimationClip.findByName(clips, 'Dance');
+        // let action = this.animationMixer.clipAction(clip);
+        // action.play();
     }
 
     setupScene() {
         this.scene = new THREE.Scene();
+        // this.scene.fog = new THREE.Fog(0xa0a0a0, 10, 50);
     }
     setupRenderer() {
         this.renderer = new THREE.WebGLRenderer(GameConfigs.RendererSettings);
         this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.gammaOutput = true;
+        this.renderer.gammeFactor = 2.2;
+        this.renderer.shadowMap.enabled = true;
     }
     setupCamera() {
         if (GameConfigs.Helpers.doubleCameraMode) {
@@ -223,8 +230,10 @@ export class GameLoop {
             this.setupCameraView2();
         }
         else {
+            // todo fix aspect ration update
             this.camera = new THREE.PerspectiveCamera(60, 2, 0.1, 500);
-            this.camera.position.set(8, 14, 20);
+            this.camera.position.set(0, 2, 12);
+            // this.camera.rotation.z -= Math.Pi / 2;
             // this.camera.lookAt(0, 5, 0);
 
             this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
