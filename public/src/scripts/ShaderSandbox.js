@@ -29,11 +29,11 @@ window.onload = () =>
 
     for (let i = 0; i < particleCount; ++i)
     {
-        positions.push(0, 0, 1.83);
+        // positions.push(0, 0, 1.83);
         velocities.push((Math.random() * 2 - 1) * 0.05, (Math.random() * 2 - 1) * 0.05, .93 + Math.random() * 0.02);
-        // positions.push((Math.random() * 2 - 1) * radius);
-        // positions.push((Math.random() * 2 - 1) * radius);
-        // positions.push((Math.random() * 2 - 1) * radius);
+        positions.push((Math.random() * 2 - 1) * radius);
+        positions.push((Math.random() * 2 - 1) * radius);
+        positions.push((Math.random() * 2 - 1) * radius);
         color.setRGB(1, 1, 0);
         colors.push(color.r, color.g, color.b);
 
@@ -211,76 +211,6 @@ window.onload = () =>
         //     }
         // }
 
-        let positionsArray = geometry.attributes.position.array;
-        let bp, p;
-        for (let i = 0; i < particleCount; i += 2)
-        {
-            bp = i * 3;
-            positionsArray[bp] = positionsArray[bp + 3];
-            positionsArray[bp + 1] = positionsArray[bp + 4];
-
-            velocities[bp] *= velocities[bp + 2];
-            velocities[bp + 1] *= velocities[bp + 2];
-
-            // horizontal
-            p = positionsArray[bp + 3];
-            p += velocities[bp];
-            if (p < -ratio)
-            {
-                p = -ratio;
-                velocities[bp] = Math.abs(velocities[bp]);
-            } else if (p > ratio)
-            {
-                p = ratio;
-                velocities[bp] = -Math.abs(velocities[bp]);
-            }
-            positionsArray[bp + 3] = p;
-
-            // vertical
-            p = positionsArray[bp + 4];
-            p += velocities[bp + 1];
-            if (p < -1)
-            {
-                p = -1;
-                velocities[bp] = Math.abs(velocities[bp + 1]);
-            } else if (p > 1)
-            {
-                p = 1;
-                velocities[bp] = -Math.abs(velocities[bp + 1]);
-            }
-            positionsArray[bp + 4] = p;
-
-            if (bMouseDown)
-            {
-                let dx = touchX - positionsArray[bp];
-                let dy = touchY - positionsArray[bp + 1];
-                let d = Math.sqrt(dx * dx + dy * dy);
-                if (d < 2)
-                {
-                    if (d < 0.03)
-                    {
-                        positionsArray[bp + 3] = (Math.random() * 2 - 1) * ratio;
-                        positionsArray[bp + 4] = Math.random() * 2 - 1;
-                        velocities[bp] = 0;
-                        velocities[bp + 1] = 0;
-                    } else
-                    {
-                        dx /= d;
-                        dy /= d;
-                        d = (2 - d) / 2;
-                        d *= d;
-                        velocities[bp] += dx * d * 0.01;
-                        velocities[bp + 1] += dy * d * 0.01;
-                    }
-                }
-            }
-
-
-        }
-        geometry.attributes.position.needsUpdate = true;
-
-        uniforms.time.value = clock.getElapsedTime();
-        uniforms.time.needsUpdate = true;
 
         renderer.render(scene, camera);
         requestAnimationFrame(() => render());

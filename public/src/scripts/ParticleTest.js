@@ -7,7 +7,29 @@ var canvas, gl,
     cw,
     ch,
     colorLoc,
-    numLines = 10000;
+    numLines = 100000;
+
+
+    function vertexShaderCode() {
+        return `
+            attribute vec3 vertexPosition;
+            uniform mat4 modelViewMatrix;
+            uniform mat4 perspectiveMatrix;
+            void main(void) {
+                gl_Position = perspectiveMatrix * modelViewMatrix * vec4(vertexPosition, 1.0);
+            }`;
+    }
+
+    function fragmentShaderCode() {
+        return `
+            #ifdef GL_ES
+                precision highp float;
+            #endif
+            void main(void) {
+                gl_FragColor = vec4(1.0, 0.31, 0.18, 0.07);
+            }
+        `;
+    }
 
 /**
  * Initialises WebGL and creates the 3D scene.
@@ -15,7 +37,8 @@ var canvas, gl,
 function loadScene()
 {
     //    Get the canvas element
-    canvas = document.getElementById("webGLCanvas");
+    canvas = document.getElementById("c");
+    console.log(canvas);
     //    Get the WebGL context
     gl = canvas.getContext("experimental-webgl");
     //    Check whether the WebGL context is available or not
@@ -39,22 +62,23 @@ function loadScene()
     //    More info about vertex shaders: http://en.wikipedia.org/wiki/Vertex_shader
 
     //    Grab the script element
-    var vertexShaderScript = document.getElementById("shader-vs");
+    var vertexShaderScript = vertexShaderCode();
     var vertexShader = gl.createShader(gl.VERTEX_SHADER);
-    gl.shaderSource(vertexShader, vertexShaderScript.text);
+    gl.shaderSource(vertexShader, vertexShaderScript);
     gl.compileShader(vertexShader);
     if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS))
     {
         alert("Couldn't compile the vertex shader");
+        console.log(gl.getShaderInfoLog(vertexShader));
         gl.deleteShader(vertexShader);
         return;
     }
 
     //    Load the fragment shader that's defined in a separate script
     //    More info about fragment shaders: http://en.wikipedia.org/wiki/Fragment_shader
-    var fragmentShaderScript = document.getElementById("shader-fs");
+    var fragmentShaderScript = fragmentShaderCode();
     var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-    gl.shaderSource(fragmentShader, fragmentShaderScript.text);
+    gl.shaderSource(fragmentShader, fragmentShaderScript);
     gl.compileShader(fragmentShader);
     if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS))
     {
@@ -200,6 +224,10 @@ function loadScene()
     //     Set the values
     gl.uniformMatrix4fv(uModelViewMatrix, false, new Float32Array(perspectiveMatrix));
     gl.uniformMatrix4fv(uPerspectiveMatrix, false, new Float32Array(modelViewMatrix));
+
+
+
+    // gl.uniformfloat()
     //  gl.varyingVector4fv( 
     //     Draw the triangles in the vertex buffer. The first parameter specifies what
     //     drawing mode to use. This can be GL_POINTS, GL_LINE_STRIP, GL_LINE_LOOP, 
