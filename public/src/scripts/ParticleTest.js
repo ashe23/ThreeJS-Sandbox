@@ -226,7 +226,6 @@ function loadScene()
     gl.uniformMatrix4fv(uPerspectiveMatrix, false, new Float32Array(modelViewMatrix));
 
 
-
     // gl.uniformfloat()
     //  gl.varyingVector4fv( 
     //     Draw the triangles in the vertex buffer. The first parameter specifies what
@@ -247,8 +246,21 @@ function animate()
 }
 
 
+var clickedX = -1;
+var clickedY = -1;
+var step = 0.009;
 function drawScene()
 {
+    
+    // clickedX += stepX;
+    // clickedY += stepY;
+
+    // if(clickedX > 1) clickedX = -clickedX;
+    // if(clickedX < -1) clickedX = -clickedX;
+    // if(clickedY > 1) clickedY = -clickedY;
+    // if(clickedY < -1) clickedY = -clickedY;
+
+
     var i, n = vertices.length, p, bp;
     for (i = 0; i < numLines; i += 2)
     {
