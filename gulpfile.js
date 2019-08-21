@@ -8,6 +8,7 @@ gulp.task('build', function () {
         // 'node_modules/three/examples/js/loaders/*.js',
         'node_modules/three/examples/js/renderers/CSS3DRenderer.js',
         'node_modules/three/examples/js/controls/*.js',
+        'node_modules/three/examples/js/controls/*.js',
         // 'node_modules/three/examples/js/pmrem/*.js',
         // 'node_modules/three/examples/js/libs/draco/gltf/*.js',
         // 'node_modules/three/examples/js/libs/draco/gltf/*.wasm',

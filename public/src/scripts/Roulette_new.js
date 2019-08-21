@@ -1,7 +1,35 @@
-let camera, renderer, scene;
-let sprite_bg, sprite_roulette;
+let camera, cameraOrtho, renderer, scene, sceneOrtho;
+let sprite_numberpad, arrow;
 
+let sprites = {
+    bg: 'models/Textures/Roulette/T_BG.png',
+    number_pad: 'models/Textures/Roulette/numberpad.png',
+    arrow: 'models/Textures/Roulette/T_Arrow.png',
+    point: 'models/Textures/Roulette/T_Point.png',
+    sand_time: 'models/Textures/Roulette/T_SandTime.png',
+    roulette1: 'models/Textures/Roulette/roulette_1.png',
+    roulette2: 'models/Textures/Roulette/roulette_2.png',
+    roulette3: 'models/Textures/Roulette/roulette_3.png'
+};
+
+const FPS = 60;
+const step = 1 / FPS;
+const duration = 20;
+let time = 0;
+let offset = 0;
+const SpinCount = 10;
+let DesiredNumber = 18;
+const SingleNumberAngle = -0.1698;
+const NumberSequence = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
 const particleCount = 10000;
+const GameState = {
+    idle: 1,
+    spinning: 2
+};
+let CurrentGameState = GameState.idle;
+
+const width = window.innerWidth;
+const height = window.innerHeight;
 
 let originPositions = [];
 let destPositions = [];
@@ -16,10 +44,19 @@ var uniforms = {
 
 function init()
 {
-    camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+    console.log(width, height);
+    camera = new THREE.PerspectiveCamera(60, width / height, 1, 2100);
+    camera.position.z = 1500;
+
+    cameraOrtho = new THREE.OrthographicCamera(-width / 2, width / 2, height / 2, -height / 2, 1, 10);
+    cameraOrtho.position.z = 1;
+
     scene = new THREE.Scene();
+    sceneOrtho = new THREE.Scene();
+
     renderer = new THREE.WebGLRenderer();
     renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.autoClear = false;
     document.body.appendChild(renderer.domElement);
 
     gameLogic();
@@ -32,45 +69,122 @@ function animate(timestamp)
 {
     requestAnimationFrame(animate);
 
+    if (CurrentGameState === GameState.spinning)
+    {
+        time += step;
+        RouletteSpin(time);
+        if (time > duration) 
+        {
+            CurrentGameState = GameState.idle;
+            time = 0;
+            Offset = sprite_numberpad.material.rotation / (Math.PI * 2);
+        }
+    }
+    
     uniforms["time"].value = timestamp / 100;
+    renderer.clear();
     renderer.render(scene, camera);
+    renderer.clearDepth();
+    renderer.render(sceneOrtho, cameraOrtho);
 }
 
 function onWindowResize()
 {
-    camera.aspect = window.innerWidth / window.innerHeight;
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    let aspect_ratio = width / height;
+
+    console.log(width, height);
+
+    camera.aspect = aspect_ratio;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    cameraOrtho.left = -width / 2;
+    cameraOrtho.right = width / 2;
+    cameraOrtho.top = height / 2;
+    cameraOrtho.bottom = -height / 2;
+    cameraOrtho.updateProjectionMatrix();
+
+    renderer.setSize(width, height);
 }
 
 function gameLogic()
 {
-    // sprites   
-    sprite_bg = scene.add(SpriteLoader('models/Textures/Roulette/T_BG.png', new THREE.Vector3(2, 2.3, 1)));
-    sprite_roulette = scene.add(SpriteLoader('models/Textures/Roulette/T_Roulette.png', new THREE.Vector3(1.42, 1.42, 1)));
-    // scene.add(SpriteLoader('models/Textures/Roulette/T_NumberPad.png', new THREE.Vector3(1, 1, 1)));
+    // sprites  
+    let sprite_bg = SpriteLoader(sprites.bg);
+    scene.add(sprite_bg);
+    sprite_bg.scale.set(4000, 2000, 1);
 
+    let sprite_roulette1 = SpriteLoader(sprites.roulette1);
+    sceneOrtho.add(sprite_roulette1);
+    sprite_roulette1.scale.set(500, 500, 1);
+
+    let sprite_roulette2 = SpriteLoader(sprites.roulette2);
+    sceneOrtho.add(sprite_roulette2);
+    sprite_roulette2.scale.set(500, 500, 1);
+
+    let sprite_roulette3 = SpriteLoader(sprites.roulette3);
+    sceneOrtho.add(sprite_roulette3);
+    sprite_roulette3.scale.set(200, 200, 1);
+
+    sprite_numberpad = SpriteLoader(sprites.number_pad);
+    sceneOrtho.add(sprite_numberpad);
+    sprite_numberpad.scale.set(400, 400, 1);
+
+    let sandbox = SpriteLoader(sprites.sand_time);
+    sceneOrtho.add(sandbox);
+    sandbox.scale.set(70, 100, 1);
+    sandbox.center.set(8.5, 4.5);
+
+    arrow = SpriteLoader(sprites.arrow);
+    sceneOrtho.add(arrow);
+    arrow.scale.set(40, 60, 1);
+    arrow.center.set(0.5, -3.5);
+
+
+    // let sprite = new THREE.TextSprite({
+    //     textSize: 10,
+    //     texture: {
+    //         text: 'Hello World!',
+    //         fontFamily: 'Arial, Helvetica, sans-serif',
+    //     },
+    //     material: {color: 0xffbbff},
+    // });
+    // sceneOrtho.add(sprite);
+
+
+    // sprite_numberpad = SpriteLoader(sprites.number_pad);
+    // sceneOrtho.add(sprite_numberpad);
+    // console.log(sprite_numberpad);
+    // sprite_numberpad.scale.set(400, 380, 1);
+    // sprite_numberpad.material.blending = THREE.AdditiveBlending;
+
+    // let sprite_arrow = SpriteLoader(sprites.arrow);
+    // sceneOrtho.add(sprite_arrow);
+    // sprite_arrow.scale.set(100,100,1);
+    // sprite_arrow.center.set(0.5, -3);
+    // sprite_arrow.blending = THREE.AdditiveBlending;
 
     // background particles
     let color = new THREE.Color();
     // filling original positions with random coordinates
     for (let i = 0; i < particleCount; ++i)
     {
-        let x = THREE.Math.randFloat(-1, -0.7);
-        let y = THREE.Math.randFloat(0.5, 1);
+        let x = THREE.Math.randFloat(-1, 1);
+        let y = THREE.Math.randFloat(-1, 1);
         let z = 0;
 
         originPositions.push(x);
         originPositions.push(y);
         originPositions.push(z);
 
-        destPositions.push(THREE.Math.randFloat(-1, -0.8));
-        destPositions.push(THREE.Math.randFloat(-1, -0.9));
+        destPositions.push(THREE.Math.randFloat(-1, 1));
+        destPositions.push(THREE.Math.randFloat(-1, 1));
         destPositions.push(0);
 
         colors.push(color.setHSL(1, 1.0, 0.6));
     }
-    
+
     // creating geometry buffer
     geo = new THREE.BufferGeometry();
     geo.addAttribute('position', new THREE.Float32BufferAttribute(originPositions, 3));
@@ -82,7 +196,7 @@ function gameLogic()
         uniforms: uniforms,
         vertexShader: vertexShaderCode(),
         fragmentShader: fragmentShaderCode(),
-        blending: THREE.AdditiveBlending,
+        blending: THREE.NormalBlending,
         depthTest: false,
         transparent: true,
         vertexColors: true
@@ -90,7 +204,29 @@ function gameLogic()
 
     // creating particle system
     let particleSystem = new THREE.Points(geo, shaderMaterial);
+    particleSystem.scale.set(50, 50, 1);
     scene.add(particleSystem);
+}
+
+function lerp(a, b, t)
+{
+    return (1 - t) * a + t * b;
+}
+
+function ease(t)
+{
+    return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+}
+
+function easeOutQuart(t)
+{
+    return 1 - Math.pow(1 - t, 4);
+}
+
+function RouletteSpin(time)
+{
+    if (!sprite_numberpad) return;
+    sprite_numberpad.material.rotation = - lerp(offset, Math.PI * 2 * SpinCount + NumberSequence.indexOf(DesiredNumber) * SingleNumberAngle, easeOutQuart(time / duration));
 }
 
 function SpriteLoader(path, scale)
@@ -101,6 +237,8 @@ function SpriteLoader(path, scale)
     let spriteMaterial = new THREE.SpriteMaterial({
         map: spriteMap,
         color: 0xffffff,
+        blending: THREE.NormalBlending
+        // opacity: 0.2
     });
     let sprite = new THREE.Sprite(spriteMaterial);
     sprite.scale.set(scale.x, scale.y, scale.z);
@@ -243,7 +381,7 @@ function fragmentShaderCode()
         void main()	{
           vec3 c = vec3(1.0, 1.0, 0.0);
           vec3 c2 = vec3(1.0, 1.0, 1.0);
-          gl_FragColor = vec4(mix(c, c2, 1.0), 1.0) * texture2D(pointTexture, gl_PointCoord);
+          gl_FragColor = vec4(mix(c, c2, 1.0), 1.0) * texture2D(pointTexture, gl_PointCoord) * vec4(10.0,10.0,10.0, 1.0);
         }
     `;
 }
@@ -253,5 +391,9 @@ window.onload = () =>
 {
     init();
     animate();
+    setTimeout(() =>
+    {
+        CurrentGameState = GameState.spinning;
+    }, 2000);
 
 }

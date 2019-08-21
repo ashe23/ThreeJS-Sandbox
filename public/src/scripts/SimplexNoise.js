@@ -35,7 +35,7 @@ var width;
 var height;
 
 
-var PARTICLES_AMOUNT = 300000;
+var PARTICLES_AMOUNT = 3000000;
 init();
 config.play();
 function init()
