@@ -1,5 +1,8 @@
 let camera, cameraOrtho, renderer, scene, sceneOrtho;
-let sprite_numberpad, arrow;
+let sprite_numberpad, arrow, sandbox;
+let countdownValue = 0;
+let timerIntervalHandler, Timertexture, TimerMaterial, TimerSprite;
+let WinNumberTexture, WinNumberMaterial;
 
 let sprites = {
     bg: 'models/Textures/Roulette/T_BG.png',
@@ -9,27 +12,30 @@ let sprites = {
     sand_time: 'models/Textures/Roulette/T_SandTime.png',
     roulette1: 'models/Textures/Roulette/roulette_1.png',
     roulette2: 'models/Textures/Roulette/roulette_2.png',
-    roulette3: 'models/Textures/Roulette/roulette_3.png'
+    roulette3: 'models/Textures/Roulette/roulette_3.png',
+    dissolve: 'models/Textures/Roulette/Dissolve.png',
 };
 
-const FPS = 60;
-const step = 1 / FPS;
-const duration = 20;
+
+// Roulette numpad spin data
 let time = 0;
 let offset = 0;
-const SpinCount = 10;
 let DesiredNumber = 18;
+const FPS = 60;
+const step = 1 / FPS;
+const duration = 10;
+const SpinCount = 10;
 const SingleNumberAngle = -0.1698;
 const NumberSequence = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
 const particleCount = 10000;
 const GameState = {
     idle: 1,
-    spinning: 2
+    spinning: 2,
 };
 let CurrentGameState = GameState.idle;
 
-const width = window.innerWidth;
-const height = window.innerHeight;
+let width = window.innerWidth;
+let height = window.innerHeight;
 
 let originPositions = [];
 let destPositions = [];
@@ -38,13 +44,13 @@ let colors = [];
 var uniforms = {
     time: { value: 1 },
     uAnimation: { value: 1 },
-    pointTexture: { value: new THREE.TextureLoader().load('models/Textures/Roulette/T_Point.png') }
+    pointTexture: { value: new THREE.TextureLoader().load('models/Textures/Roulette/T_Point.png') },
+    dissolveTexture: { value: new THREE.TextureLoader().load(sprites.dissolve) },
 };
 
 
 function init()
 {
-    console.log(width, height);
     camera = new THREE.PerspectiveCamera(60, width / height, 1, 2100);
     camera.position.z = 1500;
 
@@ -73,14 +79,27 @@ function animate(timestamp)
     {
         time += step;
         RouletteSpin(time);
-        if (time > duration) 
+        if (time > duration)
         {
             CurrentGameState = GameState.idle;
             time = 0;
             Offset = sprite_numberpad.material.rotation / (Math.PI * 2);
+            setTimeout(CountDownStart, 3000);
         }
     }
-    
+
+    if (arrow.material)
+    {
+        // if (arrow.material.rotation > Math.PI / 4)
+        // {
+        //     arrow.material.rotation = 0;
+        // }
+        // else
+        // {
+        //     arrow.material.rotation += Math.PI / 64;
+        // }
+    }
+
     uniforms["time"].value = timestamp / 100;
     renderer.clear();
     renderer.render(scene, camera);
@@ -90,11 +109,12 @@ function animate(timestamp)
 
 function onWindowResize()
 {
-    let width = window.innerWidth;
-    let height = window.innerHeight;
+    width = window.innerWidth;
+    height = window.innerHeight;
     let aspect_ratio = width / height;
 
-    console.log(width, height);
+    // TimerSprite.position.set((-width / 2) + 90, 0, 0);
+    // console.log(TimerSprite.position);
 
     camera.aspect = aspect_ratio;
     camera.updateProjectionMatrix();
@@ -131,7 +151,7 @@ function gameLogic()
     sceneOrtho.add(sprite_numberpad);
     sprite_numberpad.scale.set(400, 400, 1);
 
-    let sandbox = SpriteLoader(sprites.sand_time);
+    sandbox = SpriteLoader(sprites.sand_time);
     sceneOrtho.add(sandbox);
     sandbox.scale.set(70, 100, 1);
     sandbox.center.set(8.5, 4.5);
@@ -139,47 +159,24 @@ function gameLogic()
     arrow = SpriteLoader(sprites.arrow);
     sceneOrtho.add(arrow);
     arrow.scale.set(40, 60, 1);
-    arrow.center.set(0.5, -3.5);
-
-
-    // let sprite = new THREE.TextSprite({
-    //     textSize: 10,
-    //     texture: {
-    //         text: 'Hello World!',
-    //         fontFamily: 'Arial, Helvetica, sans-serif',
-    //     },
-    //     material: {color: 0xffbbff},
-    // });
-    // sceneOrtho.add(sprite);
-
-
-    // sprite_numberpad = SpriteLoader(sprites.number_pad);
-    // sceneOrtho.add(sprite_numberpad);
-    // console.log(sprite_numberpad);
-    // sprite_numberpad.scale.set(400, 380, 1);
-    // sprite_numberpad.material.blending = THREE.AdditiveBlending;
-
-    // let sprite_arrow = SpriteLoader(sprites.arrow);
-    // sceneOrtho.add(sprite_arrow);
-    // sprite_arrow.scale.set(100,100,1);
-    // sprite_arrow.center.set(0.5, -3);
-    // sprite_arrow.blending = THREE.AdditiveBlending;
+    arrow.material.rotation += Math.PI / 4;
+    arrow.position.set(0, 250, 0);
 
     // background particles
     let color = new THREE.Color();
     // filling original positions with random coordinates
     for (let i = 0; i < particleCount; ++i)
     {
-        let x = THREE.Math.randFloat(-1, 1);
-        let y = THREE.Math.randFloat(-1, 1);
+        let x = THREE.Math.randFloat(-width, width);
+        let y = THREE.Math.randFloat(-height, height);
         let z = 0;
 
         originPositions.push(x);
         originPositions.push(y);
         originPositions.push(z);
 
-        destPositions.push(THREE.Math.randFloat(-1, 1));
-        destPositions.push(THREE.Math.randFloat(-1, 1));
+        destPositions.push(THREE.Math.randFloat(-width, -width + 500));
+        destPositions.push(THREE.Math.randFloat(-height, -height + 500));
         destPositions.push(0);
 
         colors.push(color.setHSL(1, 1.0, 0.6));
@@ -204,8 +201,41 @@ function gameLogic()
 
     // creating particle system
     let particleSystem = new THREE.Points(geo, shaderMaterial);
-    particleSystem.scale.set(50, 50, 1);
-    scene.add(particleSystem);
+    // particleSystem.scale.set(50, 50, 1);
+    // scene.add(particleSystem);
+
+    Timertexture = new THREE.TextTexture({
+        fontFamily: '"Times New Roman", Times, serif',
+        fontSize: 32,
+        // fontStyle: 'italic',
+        text: [
+            '00:00'
+        ].join('\n'),
+    });
+    TimerMaterial = new THREE.SpriteMaterial({
+        color: 0xffffbb,
+        map: Timertexture,
+    });
+    TimerSprite = new THREE.Sprite(TimerMaterial);
+    TimerSprite.scale.setX(Timertexture.image.width / Timertexture.image.height).multiplyScalar(40);
+    TimerSprite.center.set(7.48, 8.5);
+    // TimerSprite.position.set((-width + 385) / 2, (-height + 320) / 2, 0);
+    sceneOrtho.add(TimerSprite);
+
+
+    WinNumberTexture = new THREE.TextTexture({
+        fontFamily: '"Times New Roman", Times, serif',
+        fontSize: 128,
+        text: '23'
+    });
+    WinNumberMaterial = new THREE.SpriteMaterial({
+        color: 0xffffbb,
+        map: WinNumberTexture,
+    });
+    let WinNumberSprite = new THREE.Sprite(WinNumberMaterial);
+    WinNumberSprite.scale.setX(1.3).multiplyScalar(100);
+    WinNumberSprite.position.set(4, -5, 0);
+    sceneOrtho.add(WinNumberSprite);
 }
 
 function lerp(a, b, t)
@@ -226,6 +256,7 @@ function easeOutQuart(t)
 function RouletteSpin(time)
 {
     if (!sprite_numberpad) return;
+
     sprite_numberpad.material.rotation = - lerp(offset, Math.PI * 2 * SpinCount + NumberSequence.indexOf(DesiredNumber) * SingleNumberAngle, easeOutQuart(time / duration));
 }
 
@@ -238,11 +269,9 @@ function SpriteLoader(path, scale)
         map: spriteMap,
         color: 0xffffff,
         blending: THREE.NormalBlending
-        // opacity: 0.2
     });
     let sprite = new THREE.Sprite(spriteMaterial);
     sprite.scale.set(scale.x, scale.y, scale.z);
-    // sprite.position.set(position.x, position.y, position.z);
     return sprite;
 }
 
@@ -335,29 +364,25 @@ function vertexShaderCode()
         {
             vec3 pos = position;
 
-            vec3 dest = vec3(1.0, -0.5, 0.0);
+            float animation = smoothstep(fract(dest_position.y * 421.0) * 0.5, 1.0 - fract(dest_position.y * 421.0) * 0.5, uAnimation );
 
-            float animation = smoothstep(1.0 - fract(dest_position.y), fract(dest_position.y), uAnimation );
+            pos.x += snoise( position.xy * 0.02 + time) * (dest_position.y * 800.0 + 200.0);
+            pos.y += snoise( position.xy * 0.01 + time) * (fract(dest_position.y * 32.0) * 800.0 + 200.0);
 
-            pos.x += snoise( position.xy * 20.0 - time) * (dest.y / 20.0);
-            pos.y += snoise( position.xy * 10.0 - time) * (dest.y * 90.0 );
-
-
+            
             // rotation 
             float d = length(pos);
-            float angle = atan(pos.y, pos.x) + pow(d / 10.0, 0.8) * pow(animation, 0.5);
-
+            float angle = atan(pos.y, pos.x) + pow(d / 300.0, 0.3) * pow(animation, 0.5);
+            
             pos.x = cos(angle) * d;
             pos.y = sin(angle) * d;
 
-            vAlpha = abs(sin(time));
+            vAlpha = animation;
 
-            float x = mix(dest_position.x, pos.x, abs(sin(time)));
-            float y = mix(dest_position.y, pos.y, abs(sin(time)));
+            float x = mix(dest_position.x, pos.x, animation);
+            float y = mix(dest_position.y, pos.y, animation);
 
-            vec3 lerped = mix(pos, dest_position, abs(sin(time / 10.0)));
-            // pos.x += snoise(position.xy) * x;
-            // pos.y += snoise(position.xy) * y;
+            vec3 lerped = mix(pos, dest_position, animation);
 
             vColor = color;
             gl_Position = projectionMatrix * modelViewMatrix * vec4(lerped, 1.0);
@@ -368,7 +393,7 @@ function vertexShaderCode()
     `;
 }
 
-function fragmentShaderCode() 
+function fragmentShaderCode()
 {
     return `
         uniform float time;
@@ -387,13 +412,49 @@ function fragmentShaderCode()
 }
 
 
+function StartGame()
+{
+    CurrentGameState = GameState.spinning;
+}
+
+function CountDownStart()
+{
+    let minutes = THREE.Math.randInt(0, 1);
+    let seconds = THREE.Math.randInt(0, 60);
+
+    console.log(minutes + ":" + seconds);
+    countdownValue = (minutes * 60 + seconds) * 1000;
+
+    TweenMax.fromTo(TimerMaterial, 2, { opacity: 0 }, { opacity: 1 });
+    setTimeout(StartGame, countdownValue);
+    timerIntervalHandler = setInterval(CountDownTextUpdate, 1000);
+}
+
+function CountDownTextUpdate()
+{
+    if (countdownValue === 0)
+    {
+        clearInterval(timerIntervalHandler);
+        console.log('Timer stopped');
+
+        TweenMax.fromTo(TimerMaterial, 2, { opacity: 1 }, { opacity: 0 });
+        return;
+    }
+    countdownValue -= 1000;
+    Timertexture.text = millisToMinutesAndSeconds(countdownValue);
+}
+
+function millisToMinutesAndSeconds(millis)
+{
+    var minutes = Math.floor(millis / 60000);
+    var seconds = ((millis % 60000) / 1000).toFixed(0);
+    return (minutes < 10 ? '0' : '') + minutes + ":" + (seconds < 10 ? '0' : '') + seconds;
+}
+
 window.onload = () =>
 {
     init();
     animate();
-    setTimeout(() =>
-    {
-        CurrentGameState = GameState.spinning;
-    }, 2000);
 
+    CountDownStart();
 }

@@ -37,7 +37,7 @@ var height;
 
 var PARTICLES_AMOUNT = 3000000;
 init();
-config.play();
+// config.play();
 function init()
 {
 
@@ -70,7 +70,6 @@ function init()
     depthWrite: true,
     depthTest: false
   });
-  console.log(geometry);
 
   mesh = new THREE.Points(geometry, material);
   scene.add(mesh);
@@ -116,7 +115,6 @@ function updateText()
     }
   }
 
-  console.log(extras);
   geometry.attributes.position.needsUpdate = true;
   geometry.attributes.extras.needsUpdate = true;
   geometry.drawcalls = geometry.offsets = [{ start: 0, count: count, index: 0 }];
