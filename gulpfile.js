@@ -1,4 +1,5 @@
 var gulp = require('gulp');
+var babel = require('gulp-babel');
 var clean = require('gulp-clean');
 var del = require('del');
 
@@ -15,11 +16,12 @@ gulp.task('build', function () {
         // 'node_modules/dat.gui/build/dat.gui.min.js',
         // 'node_modules/stats.js/build/stats.min.js',        
         // 'node_modules/bootstrap/dist/css/bootstrap.min.css',        
-        // 'public/src/Core/*.js',
+        'public/src/Core/*.js',
         'public/src/libs/*.js',
         'public/src/scripts/*.js',
         // 'public/main.js'
     ])
+        // .pipe(babel())
         .pipe(gulp.dest('public/build/'));
 });
 

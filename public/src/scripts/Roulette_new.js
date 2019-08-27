@@ -1,8 +1,12 @@
-let camera, cameraOrtho, renderer, scene, sceneOrtho;
-let sprite_numberpad, arrow, sandbox;
+let game = new RouletteGame();
+let camera, cameraOrtho, renderer, scene, sceneOrtho, clock;
+let sprite_numberpad, arrow, sandbox, sprite_roulette2;
 let countdownValue = 0;
 let timerIntervalHandler, Timertexture, TimerMaterial, TimerSprite;
 let WinNumberTexture, WinNumberMaterial;
+let ArrowTimerHandler, ArrowTimerFrequency = 300, RotationAnimDuration = 0.01;
+
+let lastNumber;
 
 let sprites = {
     bg: 'models/Textures/Roulette/T_BG.png',
@@ -24,13 +28,14 @@ let DesiredNumber = 18;
 const FPS = 60;
 const step = 1 / FPS;
 const duration = 10;
-const SpinCount = 10;
-const SingleNumberAngle = -0.1698;
-const NumberSequence = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
+const SpinCount = 5;
+const SingleNumberAngle = -0.1745329251994; // radian
+const NumberSequence = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 21, 13, 36, 11, 30, 8, 23, 5, 24, 18, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
 const particleCount = 10000;
 const GameState = {
     idle: 1,
     spinning: 2,
+    preStopSpin: 3,
 };
 let CurrentGameState = GameState.idle;
 
@@ -65,7 +70,12 @@ function init()
     renderer.autoClear = false;
     document.body.appendChild(renderer.domElement);
 
+    clock = new THREE.Clock();
+
+
     gameLogic();
+
+    sprite_numberpad.material.rotation = 0;
 
     onWindowResize();
     window.addEventListener('resize', onWindowResize, false);
@@ -75,29 +85,34 @@ function animate(timestamp)
 {
     requestAnimationFrame(animate);
 
+
     if (CurrentGameState === GameState.spinning)
     {
         time += step;
         RouletteSpin(time);
-        if (time > duration)
+        RotationAnimDuration = THREE.Math.mapLinear(time, 0 , duration + 2, 0, 1);
+
+
+        // console.log(ArrowTimerFrequency);
+        // change number based on rotation speed
+        // WinNumberTexture.text = NumberSequence[THREE.Math.randInt(0, NumberSequence.length - 1)].toString();
+        // TweenMax.fromTo(WinNumberTexture, duration, { text: WinNumberTexture.text }, { text: NumberSequence[THREE.Math.randInt(0, NumberSequence.length - 1)].toString() });
+
+        // if(time + 2 > duration)
+        // {
+        //     clearInterval(ArrowTimerHandler);
+        //     arrow.material.rotation = TweenMax.fromTo(arrow.material, 0.8, { rotation: arrow.material.rotation }, { rotation: 0 });
+        // }
+
+        if (time + 1 > duration)
         {
             CurrentGameState = GameState.idle;
             time = 0;
-            Offset = sprite_numberpad.material.rotation / (Math.PI * 2);
-            setTimeout(CountDownStart, 3000);
+            offset = sprite_numberpad.material.rotation / (Math.PI * 2);
+            WinNumberTexture.text = DesiredNumber.toString();
+            arrow.material.rotation = 0;
+            setTimeout(CountDownStart, 5000);
         }
-    }
-
-    if (arrow.material)
-    {
-        // if (arrow.material.rotation > Math.PI / 4)
-        // {
-        //     arrow.material.rotation = 0;
-        // }
-        // else
-        // {
-        //     arrow.material.rotation += Math.PI / 64;
-        // }
     }
 
     uniforms["time"].value = timestamp / 100;
@@ -112,9 +127,6 @@ function onWindowResize()
     width = window.innerWidth;
     height = window.innerHeight;
     let aspect_ratio = width / height;
-
-    // TimerSprite.position.set((-width / 2) + 90, 0, 0);
-    // console.log(TimerSprite.position);
 
     camera.aspect = aspect_ratio;
     camera.updateProjectionMatrix();
@@ -139,7 +151,7 @@ function gameLogic()
     sceneOrtho.add(sprite_roulette1);
     sprite_roulette1.scale.set(500, 500, 1);
 
-    let sprite_roulette2 = SpriteLoader(sprites.roulette2);
+    sprite_roulette2 = SpriteLoader(sprites.roulette2);
     sceneOrtho.add(sprite_roulette2);
     sprite_roulette2.scale.set(500, 500, 1);
 
@@ -159,7 +171,7 @@ function gameLogic()
     arrow = SpriteLoader(sprites.arrow);
     sceneOrtho.add(arrow);
     arrow.scale.set(40, 60, 1);
-    arrow.material.rotation += Math.PI / 4;
+    // arrow.material.rotation += Math.PI / 4;
     arrow.position.set(0, 250, 0);
 
     // background particles
@@ -205,12 +217,10 @@ function gameLogic()
     // scene.add(particleSystem);
 
     Timertexture = new THREE.TextTexture({
-        fontFamily: '"Times New Roman", Times, serif',
+        fontFamily: '"Roboto"',
         fontSize: 32,
         // fontStyle: 'italic',
-        text: [
-            '00:00'
-        ].join('\n'),
+        text: ['00:00'].join('\n'),
     });
     TimerMaterial = new THREE.SpriteMaterial({
         color: 0xffffbb,
@@ -219,19 +229,19 @@ function gameLogic()
     TimerSprite = new THREE.Sprite(TimerMaterial);
     TimerSprite.scale.setX(Timertexture.image.width / Timertexture.image.height).multiplyScalar(40);
     TimerSprite.center.set(7.48, 8.5);
-    // TimerSprite.position.set((-width + 385) / 2, (-height + 320) / 2, 0);
     sceneOrtho.add(TimerSprite);
 
 
     WinNumberTexture = new THREE.TextTexture({
         fontFamily: '"Times New Roman", Times, serif',
         fontSize: 128,
-        text: '23'
+        text: '0',
     });
     WinNumberMaterial = new THREE.SpriteMaterial({
         color: 0xffffbb,
         map: WinNumberTexture,
     });
+
     let WinNumberSprite = new THREE.Sprite(WinNumberMaterial);
     WinNumberSprite.scale.setX(1.3).multiplyScalar(100);
     WinNumberSprite.position.set(4, -5, 0);
@@ -257,7 +267,50 @@ function RouletteSpin(time)
 {
     if (!sprite_numberpad) return;
 
-    sprite_numberpad.material.rotation = - lerp(offset, Math.PI * 2 * SpinCount + NumberSequence.indexOf(DesiredNumber) * SingleNumberAngle, easeOutQuart(time / duration));
+    let DesiredRotation = Math.PI * 2 * SpinCount + NumberSequence.indexOf(DesiredNumber) * SingleNumberAngle;
+    sprite_numberpad.material.rotation = -lerp(offset, DesiredRotation, easeOutQuart(time / duration));
+    sprite_roulette2.material.rotation = -lerp(offset, DesiredRotation, easeOutQuart(time / duration));
+
+    if (WinNumberTexture.text != GetNumberBasedOnRotation(sprite_numberpad.material.rotation))
+    {
+        // RotateArrow(time);
+    }
+
+    WinNumberTexture.text = GetNumberBasedOnRotation(sprite_numberpad.material.rotation);
+}
+
+function RotateArrow()
+{
+    let tween;
+    if (CurrentGameState === GameState.spinning)
+    {
+        // RotationAnimDuration = THREE.Math.mapLinear(clock.getElapsedTime(), 0 , duration - 1, 0, 0.2);
+        console.log(RotationAnimDuration);
+        tween = TweenMax.fromTo(arrow.material, RotationAnimDuration, { rotation: 0 }, { rotation: Math.PI / 4 });
+        setTimeout(RotateArrow, (RotationAnimDuration + 0.01) * 1000);
+    }
+    else
+    {
+        TweenMax.killTweensOf(tween);
+
+        if (arrow.material.rotation != 0)
+        {
+            TweenMax.fromTo(arrow.material, 0.1, { rotation: arrow.material.rotation }, { rotation: 0 });
+            RotationAnimDuration = 0.01;
+        }
+    }
+}
+
+function GetNumberBasedOnRotation(rotation)
+{
+    let index = Math.abs(Math.ceil(rotation % (Math.PI * 2) / (SingleNumberAngle - 0.01)));
+
+    if (index == 0)
+    {
+        return NumberSequence[0].toString();
+    }
+
+    return NumberSequence[NumberSequence.length - index].toString();
 }
 
 function SpriteLoader(path, scale)
@@ -419,15 +472,22 @@ function StartGame()
 
 function CountDownStart()
 {
-    let minutes = THREE.Math.randInt(0, 1);
-    let seconds = THREE.Math.randInt(0, 60);
+    let minutes = THREE.Math.randInt(0, 0);
+    let seconds = THREE.Math.randInt(0, 3);
 
-    console.log(minutes + ":" + seconds);
+    DesiredNumber = NumberSequence[THREE.Math.randInt(0, NumberSequence.length - 1)];
+    // DesiredNumber = 5;
+    // console.log(DesiredNumber);
+    // console.log(minutes + ":" + seconds);
     countdownValue = (minutes * 60 + seconds) * 1000;
 
     TweenMax.fromTo(TimerMaterial, 2, { opacity: 0 }, { opacity: 1 });
     setTimeout(StartGame, countdownValue);
     timerIntervalHandler = setInterval(CountDownTextUpdate, 1000);
+
+
+    setTimeout(RotateArrow, countdownValue);
+    // ArrowTimerHandler = setInterval(RotateArrow, 1000)
 }
 
 function CountDownTextUpdate()
