@@ -14,11 +14,11 @@ gulp.task('build', function () {
         // 'node_modules/three/examples/js/libs/draco/gltf/*.wasm',
         // 'node_modules/three/src/helpers/VertexNormalsHelper.js',
         // 'node_modules/dat.gui/build/dat.gui.min.js',
-        // 'node_modules/stats.js/build/stats.min.js',        
+        'node_modules/stats.js/build/stats.min.js',        
         // 'node_modules/bootstrap/dist/css/bootstrap.min.css',        
-        'public/src/Core/*.js',
+        // 'public/src/Core/*.js',
         'public/src/libs/*.js',
-        'public/src/scripts/*.js',
+        // 'public/src/scripts/*.js',
         // 'public/main.js'
     ])
         // .pipe(babel())
