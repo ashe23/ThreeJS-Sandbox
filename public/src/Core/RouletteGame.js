@@ -61,13 +61,21 @@ export class RouletteGame
         this.CurrentGameState = GameState.idle;
         this.RouletteNumbers = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 21, 13, 36, 11, 30, 8, 23, 5, 24, 18, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
         this.FPS = 60;
+        this.time = 0;
         this.step = 1 / this.FPS;
         this.SingleNumberAngle = -0.1745329251994; // radian
         this.SpinCount = 5;
-        this.SpintDuration = 10; // sec
+        this.SpinDuration = 10; // sec
         this.wrapper = wrapper;
-        this.number_pad = {};
         this.DesiredNumber = 0;
+        this.offset = 0;
+
+        this.sprites = {
+            number_pad: {},
+            sand_time: {},
+            arrow: {},
+            roulette_lights: {},
+        };
 
         this.Timer = {
             texture: {},
@@ -82,24 +90,34 @@ export class RouletteGame
             value: 0,
             handler: {}
         }
+
+        this.arrow = {
+            frequency: 0.1,
+            animation: {},
+        };
     }
 
     LoadRouletteSprites()
     {
         this.wrapper.sceneOrtho.add(SpriteLoader.load(sprites.bg.path, sprites.bg.scale));
+
+
         this.wrapper.sceneOrtho.add(SpriteLoader.load(sprites.roulette1.path, sprites.roulette1.scale));
-        this.wrapper.sceneOrtho.add(SpriteLoader.load(sprites.roulette2.path, sprites.roulette2.scale));
         this.wrapper.sceneOrtho.add(SpriteLoader.load(sprites.roulette3.path, sprites.roulette3.scale));
-        this.number_pad = SpriteLoader.load(sprites.number_pad.path, sprites.number_pad.scale);
-        this.wrapper.sceneOrtho.add(this.number_pad);
 
-        let sand_time = SpriteLoader.load(sprites.sand_time.path, sprites.sand_time.scale);
-        this.wrapper.sceneOrtho.add(sand_time);
-        sand_time.center.set(8.5, 4.5);
+        this.sprites.roulette_lights = SpriteLoader.load(sprites.roulette2.path, sprites.roulette2.scale);
+        this.wrapper.sceneOrtho.add(this.sprites.roulette_lights);
 
-        let arrow = SpriteLoader.load(sprites.arrow.path, sprites.arrow.scale);
-        this.wrapper.sceneOrtho.add(arrow);
-        arrow.position.set(0, 250, 0);
+        this.sprites.number_pad = SpriteLoader.load(sprites.number_pad.path, sprites.number_pad.scale);
+        this.wrapper.sceneOrtho.add(this.sprites.number_pad);
+
+        this.sprites.sand_time = SpriteLoader.load(sprites.sand_time.path, sprites.sand_time.scale);
+        this.wrapper.sceneOrtho.add(this.sprites.sand_time);
+        this.sprites.sand_time.center.set(8.5, 4.5);
+
+        this.sprites.arrow = SpriteLoader.load(sprites.arrow.path, sprites.arrow.scale);
+        this.wrapper.sceneOrtho.add(this.sprites.arrow);
+        this.sprites.arrow.position.set(0, 250, 0);
 
     }
 
@@ -122,17 +140,17 @@ export class RouletteGame
         this.wrapper.sceneOrtho.add(TimerSprite);
 
         // Win Number Text
-        let WinNumberTexture = new THREE.TextTexture({
+        this.WinNumber.texture = new THREE.TextTexture({
             fontFamily: '"Roboto"',
             fontSize: 256,
             text: '0',
         });
-        let WinNumberMaterial = new THREE.SpriteMaterial({
+        this.WinNumber.material = new THREE.SpriteMaterial({
             color: 0xffffbb,
-            map: WinNumberTexture,
+            map: this.WinNumber.texture,
         });
 
-        let WinNumberSprite = new THREE.Sprite(WinNumberMaterial);
+        let WinNumberSprite = new THREE.Sprite(this.WinNumber.material);
         WinNumberSprite.scale.setX(1.3).multiplyScalar(100);
         WinNumberSprite.position.set(4, -5, 0);
         this.wrapper.sceneOrtho.add(WinNumberSprite);
@@ -144,12 +162,19 @@ export class RouletteGame
         let seconds = THREE.Math.randInt(0, 3);
 
         this.DesiredNumber = this.RouletteNumbers[THREE.Math.randInt(0, this.RouletteNumbers.length - 1)];
+        console.log("DesiredNumber: " + this.DesiredNumber);
         this.Timer.value = (minutes * 60 + seconds) * 1000;
 
         TweenMax.fromTo(this.Timer.material, 2, { opacity: 0 }, { opacity: 1 });
-        // setTimeout(StartGame, countdownValue);
+
+        setTimeout(() =>
+        {
+            this.CurrentGameState = GameState.spinning;
+            this.StartArrowSpin();
+        }, this.Timer.value);
         this.Timer.handler = setInterval(this.CountDownTextUpdate.bind(this), 1000);
     }
+
     CountDownTextUpdate()
     {
         if (this.Timer.value === 0)
@@ -160,9 +185,84 @@ export class RouletteGame
             TweenMax.fromTo(this.Timer.material, 2, { opacity: 1 }, { opacity: 0 });
             return;
         }
+
         this.Timer.value -= 1000;
         this.Timer.texture.text = GameHelper.MllisToMinutesAndSeconds(this.Timer.value);
     }
-    Spin() { };
-    StopSpin() { };
+
+    Spin()
+    {
+        if (!this.sprites.number_pad) return;
+
+        let DesiredRotation = Math.PI * 2 * this.SpinCount + this.RouletteNumbers.indexOf(this.DesiredNumber) * this.SingleNumberAngle;
+
+        this.sprites.number_pad.material.rotation = -GameHelper.lerp(this.offset, DesiredRotation, GameHelper.easeOutQuart(this.time / this.SpinDuration));
+        this.sprites.roulette_lights.material.rotation = -GameHelper.lerp(this.offset, DesiredRotation, GameHelper.easeOutQuart(this.time / this.SpinDuration));
+        // this.sprites.arrow.material.rotation = GameHelper.lerp(0, Math.PI / 4, GameHelper.easeOutQuart(this.time));
+        
+
+        if (this.sprites.arrow.material.rotation > Math.PI / 4)
+        {
+            this.sprites.arrow.material.rotation = 0;
+        }
+
+        // if (this.WinNumber.texture.text != this.GetNumberBasedOnRotation())
+        // {
+        //     console.log(1);
+        // }
+
+        this.WinNumber.texture.text = this.GetNumberBasedOnRotation();
+    };
+
+    StartArrowSpin()
+    {
+        // todo
+       this.arrow.frequency = GameHelper.lerp(0.01, 1.5, GameHelper.easeOutQuart(this.time / (this.SpinDuration * this.SpinCount)));
+       console.log(this.arrow.frequency);
+
+        if (this.time + 2.1 > this.SpinDuration)
+        {
+            TweenMax.killTweensOf(this.arrow.animation);
+            // // this.sprites.arrow.material.rotation = 0;
+            TweenMax.fromTo(this.sprites.arrow.material, 0.1, { rotation: this.sprites.arrow.material.rotation }, { rotation: 0 });
+            return;
+        }
+
+        // console.log(this.arrow.calls_count);
+        if (this.CurrentGameState === GameState.spinning)
+        {
+            this.arrow.animation = TweenMax.fromTo(this.sprites.arrow.material, this.arrow.frequency, { rotation: 0 }, { rotation: Math.PI / 4 });
+            // this.arrow.frequency = THREE.Math.mapLinear(this.time, 0, this.SpinDuration - 3, 0.02, 1.4);
+            setTimeout(this.StartArrowSpin.bind(this), (this.arrow.frequency + 0.01) * 1000);
+            return;
+        }
+        else
+        {
+            console.log('Start Arrow Spin stopped!!!');
+            TweenMax.killTweensOf(this.arrow.animation);
+            // this.sprites.arrow.material.rotation = 0;
+            TweenMax.fromTo(this.sprites.arrow.material, 0.1, { rotation: this.sprites.arrow.material.rotation }, { rotation: 0 });
+        }
+    }
+
+    StopSpin()
+    {
+        this.time = 0;
+        this.CurrentGameState = GameState.idle;
+        this.offset = this.sprites.number_pad.material.rotation / (Math.PI * 2);
+
+
+        setTimeout(this.StartCountDown.bind(this), 5000);
+    };
+
+    GetNumberBasedOnRotation()
+    {
+        let index = Math.abs(Math.ceil(this.sprites.number_pad.material.rotation % (Math.PI * 2) / this.SingleNumberAngle - 0.01));
+        if (index === 0)
+        {
+            return this.RouletteNumbers[0].toString();
+        }
+
+        return this.RouletteNumbers[this.RouletteNumbers.length - index].toString();
+    }
 }

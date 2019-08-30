@@ -1,5 +1,5 @@
 import { ThreeJSWrapper } from './Core/ThreeJSWrapper.js';
-import { RouletteGame } from './Core/RouletteGame.js';
+import { RouletteGame, GameState } from './Core/RouletteGame.js';
 
 window.onload = () =>
 {
@@ -13,7 +13,7 @@ window.onload = () =>
         game.LoadRouletteSprites();
         game.LoadTextSprites();
         game.StartCountDown();
-
+        // game.Spin();
         // start countdown
         // todo should be request to server here
 
@@ -22,6 +22,19 @@ window.onload = () =>
     }
     wrapper.animate_callback = () =>
     {
+        if (game.CurrentGameState === GameState.spinning)
+        {
+            game.time += game.step;
+            game.Spin();
+
+
+            
+            if (game.time + 1 > game.SpinDuration)
+            {
+                game.StopSpin();
+            }
+            
+        }
     }
 
     wrapper.init();
