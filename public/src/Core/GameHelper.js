@@ -16,4 +16,9 @@ export class GameHelper
     {
         return 1 - Math.pow(1 - t, 4);
     }
+
+    static easeInOutQuint(t)
+    {
+        return t < .5 ? 16 * t * t * t * t * t : 1 + 16 * (--t) * t * t * t * t;
+    }
 }

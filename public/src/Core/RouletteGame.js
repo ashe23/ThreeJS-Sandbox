@@ -59,6 +59,7 @@ export class RouletteGame
     constructor(wrapper)
     {
         this.CurrentGameState = GameState.idle;
+        this.lastTickRotation = 0;
         this.RouletteNumbers = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 21, 13, 36, 11, 30, 8, 23, 5, 24, 18, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
         this.FPS = 60;
         this.time = 0;
@@ -70,8 +71,26 @@ export class RouletteGame
         this.DesiredNumber = 0;
         this.offset = 0;
 
+        this.particles = {
+            count: 10000,
+            destPositions: [],
+            originPositions: [],
+            colors: [],
+            geo: {},
+            uniforms: {
+                time: { value: 1 },
+                uAnimation: { value: 1 },
+                pointTexture: { value: new THREE.TextureLoader().load('textures/Roulette/T_Point.png') },
+                // dissolveTexture: { value: new THREE.TextureLoader().load(sprites.dissolve) },
+            },
+            material: {},
+            system: {}
+        }
+
         this.sprites = {
-            number_pad: {},
+            number_pad: {
+                speed: 0
+            },
             sand_time: {},
             arrow: {},
             roulette_lights: {},
@@ -198,18 +217,12 @@ export class RouletteGame
 
         this.sprites.number_pad.material.rotation = -GameHelper.lerp(this.offset, DesiredRotation, GameHelper.easeOutQuart(this.time / this.SpinDuration));
         this.sprites.roulette_lights.material.rotation = -GameHelper.lerp(this.offset, DesiredRotation, GameHelper.easeOutQuart(this.time / this.SpinDuration));
-        // this.sprites.arrow.material.rotation = GameHelper.lerp(0, Math.PI / 4, GameHelper.easeOutQuart(this.time));
-        
 
-        if (this.sprites.arrow.material.rotation > Math.PI / 4)
+        if (this.WinNumber.texture.text != this.GetNumberBasedOnRotation())
         {
-            this.sprites.arrow.material.rotation = 0;
+            // this.sprites.arrow.material.rotation = 0;
+            this.arrow.frequency = GameHelper.lerp(1, 0.01, (this.sprites.number_pad.speed / 11));
         }
-
-        // if (this.WinNumber.texture.text != this.GetNumberBasedOnRotation())
-        // {
-        //     console.log(1);
-        // }
 
         this.WinNumber.texture.text = this.GetNumberBasedOnRotation();
     };
@@ -217,8 +230,9 @@ export class RouletteGame
     StartArrowSpin()
     {
         // todo
-       this.arrow.frequency = GameHelper.lerp(0.01, 1.5, GameHelper.easeOutQuart(this.time / (this.SpinDuration * this.SpinCount)));
-       console.log(this.arrow.frequency);
+        // this.arrow.frequency = GameHelper.lerp(0.01, 1.5, GameHelper.easeOutQuart(this.time / (this.SpinDuration * this.SpinCount)));
+        // console.log(this.arrow.frequency);
+        
 
         if (this.time + 2.1 > this.SpinDuration)
         {
@@ -228,7 +242,6 @@ export class RouletteGame
             return;
         }
 
-        // console.log(this.arrow.calls_count);
         if (this.CurrentGameState === GameState.spinning)
         {
             this.arrow.animation = TweenMax.fromTo(this.sprites.arrow.material, this.arrow.frequency, { rotation: 0 }, { rotation: Math.PI / 4 });
@@ -254,6 +267,175 @@ export class RouletteGame
 
         setTimeout(this.StartCountDown.bind(this), 5000);
     };
+
+    SpawnParticles() 
+    {
+        let color = new THREE.Color();
+        for (let i = 0; i < this.particles.count; ++i)
+        {
+            let x = THREE.Math.randFloat(-this.wrapper.width, this.wrapper.width);
+            let y = THREE.Math.randFloat(this.wrapper.height, this.wrapper.height);
+            let z = 0;
+
+            this.particles.originPositions.push(x);
+            this.particles.originPositions.push(y);
+            this.particles.originPositions.push(z);
+
+            this.particles.destPositions.push(THREE.Math.randFloat(-this.wrapper.width, -this.wrapper.width + 500));
+            this.particles.destPositions.push(THREE.Math.randFloat(-this.wrapper.height, -this.wrapper.height + 500));
+            this.particles.destPositions.push(0);
+
+            this.particles.colors.push(color.setHSL(1, 1, 0.6));
+        }
+
+
+        this.particles.geo = new THREE.BufferGeometry();
+        this.particles.geo.addAttribute('position', new THREE.Float32BufferAttribute(this.particles.originPositions, 3));
+        this.particles.geo.addAttribute('dest_position', new THREE.Float32BufferAttribute(this.particles.destPositions, 3));
+        this.particles.geo.addAttribute('color', new THREE.Float32BufferAttribute(this.particles.colors, 3));
+
+        this.particles.material = new THREE.ShaderMaterial({
+            uniforms: this.particles.uniforms,
+            vertexShader: this.vertexShaderCode(),
+            fragmentShader: this.fragmentShaderCode(),
+            blending: THREE.NormalBlending,
+            depthTest: false,
+            transparent: true,
+            vertexColors: true
+        })
+
+        this.particles.system = new THREE.Points(this.particles.geo, this.particles.material);
+        this.particles.system.scale.set(50, 50, 1);
+        this.wrapper.scene.add(this.particles.system);
+
+    }
+
+    vertexShaderCode()
+    {
+        return `
+            uniform float time;
+            uniform float uAnimation;
+            attribute vec3 dest_position;
+            varying vec3 vColor;
+            varying float vAlpha;
+            vec3 mod289(vec3 x) {
+                return x - floor(x * (1.0 / 289.0)) * 289.0;
+            }
+        
+            vec2 mod289(vec2 x) {
+                return x - floor(x * (1.0 / 289.0)) * 289.0;
+            }
+        
+            vec3 permute(vec3 x) {
+                return mod289(((x*34.0)+1.0)*x);
+            }
+        
+            float snoise(vec2 v)
+                {
+                const vec4 C = vec4(0.211324865405187,  // (3.0-sqrt(3.0))/6.0
+                                    0.366025403784439,  // 0.5*(sqrt(3.0)-1.0)
+                                -0.577350269189626,  // -1.0 + 2.0 * C.x
+                                    0.024390243902439); // 1.0 / 41.0
+            // First corner
+                vec2 i  = floor(v + dot(v, C.yy) );
+                vec2 x0 = v -   i + dot(i, C.xx);
+        
+            // Other corners
+                vec2 i1;
+                //i1.x = step( x0.y, x0.x ); // x0.x > x0.y ? 1.0 : 0.0
+                //i1.y = 1.0 - i1.x;
+                i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+                // x0 = x0 - 0.0 + 0.0 * C.xx ;
+                // x1 = x0 - i1 + 1.0 * C.xx ;
+                // x2 = x0 - 1.0 + 2.0 * C.xx ;
+                vec4 x12 = x0.xyxy + C.xxzz;
+                x12.xy -= i1;
+        
+            // Permutations
+                i = mod289(i); // Avoid truncation effects in permutation
+                vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 ))
+                    + i.x + vec3(0.0, i1.x, 1.0 ));
+        
+                vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
+                m = m*m ;
+                m = m*m ;
+        
+            // Gradients: 41 points uniformly over a line, mapped onto a diamond.
+            // The ring size 17*17 = 289 is close to a multiple of 41 (41*7 = 287)
+        
+                vec3 x = 2.0 * fract(p * C.www) - 1.0;
+                vec3 h = abs(x) - 0.5;
+                vec3 ox = floor(x + 0.5);
+                vec3 a0 = x - ox;
+        
+            // Normalise gradients implicitly by scaling m
+            // Approximation of: m *= inversesqrt( a0*a0 + h*h );
+                m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
+        
+            // Compute final noise value at P
+                vec3 g;
+                g.x  = a0.x  * x0.x  + h.x  * x0.y;
+                g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+                return 130.0 * dot(m, g);
+            }
+            // float rand(vec2 n) { 
+            //   return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453);
+            // }
+            
+            // float noise(vec2 p){
+            //   vec2 ip = floor(p);
+            //   vec2 u = fract(p);
+            //   u = u*u*(3.0-2.0*u);
+            
+            //   float res = mix(
+            //     mix(rand(ip),rand(ip+vec2(1.0,0.0)),u.x),
+            //     mix(rand(ip+vec2(0.0,1.0)),rand(ip+vec2(1.0,1.0)),u.x),u.y);
+            //   return res*res;
+            // }
+            
+            void main()
+            {
+                vec3 pos = position;
+                float animation = smoothstep(fract(dest_position.y * 421.0) * 0.5, 1.0 - fract(dest_position.y * 421.0) * 0.5, uAnimation );
+                pos.x += snoise( position.xy * 0.02 + time) * (dest_position.y * 800.0 + 200.0);
+                pos.y += snoise( position.xy * 0.01 + time) * (fract(dest_position.y * 32.0) * 800.0 + 200.0);
+                
+                // rotation 
+                float d = length(pos);
+                float angle = atan(pos.y, pos.x) + pow(d / 300.0, 0.3) * pow(animation, 0.5);
+                
+                pos.x = cos(angle) * d;
+                pos.y = sin(angle) * d;
+                vAlpha = animation;
+                float x = mix(dest_position.x, pos.x, animation);
+                float y = mix(dest_position.y, pos.y, animation);
+                vec3 lerped = mix(pos, dest_position, animation);
+                vColor = color;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(lerped, 1.0);
+                // gl_Position = projectionMatrix * modelViewMatrix * vec4(dest_position, 1.0);
+                // gl_Position = vec4(dest_position, 1.0);
+                gl_PointSize = 5.0;
+            }
+    `;
+    }
+
+    fragmentShaderCode()
+    {
+        return `
+            uniform float time;
+            uniform vec2 resolution;  
+            uniform sampler2D pointTexture;
+            varying vec3 vColor;
+            varying float vAlpha;
+
+            void main()	{
+                vec3 c = vec3(1.0, 1.0, 0.0);
+                vec3 c2 = vec3(1.0, 1.0, 1.0);
+                // gl_FragColor = vec4(c, 1.0);
+                gl_FragColor = vec4(mix(c, c2, 1.0), 1.0) * texture2D(pointTexture, gl_PointCoord) * vec4(10.0,10.0,10.0, 1.0);
+            }
+        `;
+    }
 
     GetNumberBasedOnRotation()
     {

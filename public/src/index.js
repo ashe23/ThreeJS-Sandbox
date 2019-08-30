@@ -13,6 +13,7 @@ window.onload = () =>
         game.LoadRouletteSprites();
         game.LoadTextSprites();
         game.StartCountDown();
+        game.SpawnParticles();
         // game.Spin();
         // start countdown
         // todo should be request to server here
@@ -28,13 +29,21 @@ window.onload = () =>
             game.Spin();
 
 
-            
+
             if (game.time + 1 > game.SpinDuration)
             {
                 game.StopSpin();
             }
-            
+
         }
+
+
+        game.sprites.number_pad.speed = Math.abs((game.sprites.number_pad.material.rotation - game.lastTickRotation) / wrapper.clock.getDelta());
+
+        console.log('SPeed: ' + game.sprites.number_pad.speed);
+        game.lastTickRotation = game.sprites.number_pad.material.rotation;
+
+        game.particles.uniforms.time.value = game.time / 100;
     }
 
     wrapper.init();
