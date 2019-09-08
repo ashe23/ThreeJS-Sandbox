@@ -21,4 +21,37 @@ export class GameHelper
     {
         return t < .5 ? 16 * t * t * t * t * t : 1 + 16 * (--t) * t * t * t * t;
     }
+
+    static inverseEaseInOutQuart(t)
+    {
+        return (1 - t) ^ (1 / 4);
+    }
+
+    // Reads color buffer from texture to Uint8Array
+    static readColorBufferFromTexture(path)
+    {
+        return new Promise((resolve, reject) =>
+        {
+            const loader = new THREE.TextureLoader();
+            let originalColors;
+            loader.load(path, (texture) =>
+            {
+                texture.format = THREE.RGBAFormat;
+
+                const img = texture.image;
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.scale(1, -1);
+                ctx.drawImage(img, 0, 0, img.width, img.height * -1);
+
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                originalColors = Uint8Array.from(imageData.data);
+
+                resolve(originalColors);
+            });
+        })
+    }
 }

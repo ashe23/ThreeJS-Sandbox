@@ -1,5 +1,7 @@
 import { SpriteLoader } from './SpriteLoader.js';
 import { GameHelper } from './GameHelper.js';
+import { TextureAnimator } from './TextureAnimator.js'
+
 
 export let sprites = {
     bg: {
@@ -46,6 +48,11 @@ export let sprites = {
     {
         path: 'textures/Roulette/Dissolve.png',
         scale: new THREE.Vector3(1, 1, 1)
+    },
+    roulette_anim:
+    {
+        path: 'textures/Roulette/RouletteAnim.png',
+        scale: new THREE.Vector2(1, 1, 1)
     }
 };
 
@@ -80,7 +87,7 @@ export class RouletteGame
             uniforms: {
                 time: { value: 1 },
                 uAnimation: { value: 1 },
-                pointTexture: { value: new THREE.TextureLoader().load('textures/Roulette/T_Point.png') },
+                pointTexture: { value: new THREE.TextureLoader().load(sprites.point.path) },
                 // dissolveTexture: { value: new THREE.TextureLoader().load(sprites.dissolve) },
             },
             material: {},
@@ -94,6 +101,7 @@ export class RouletteGame
             sand_time: {},
             arrow: {},
             roulette_lights: {},
+            bg: {}
         };
 
         this.Timer = {
@@ -114,12 +122,24 @@ export class RouletteGame
             frequency: 0.1,
             animation: {},
         };
+
+        this.TextureAnimator = {};
     }
 
     LoadRouletteSprites()
     {
-        this.wrapper.sceneOrtho.add(SpriteLoader.load(sprites.bg.path, sprites.bg.scale));
+        // let roulete_anim = new THREE.TextureLoader().load(sprites.roulette_anim.path);
+        // this.TextureAnimator = new TextureAnimator(roulete_anim, 4, 3, 12, 0.01);
+        // this.TextureAnimator.init();
 
+        // var explosionMaterial = new THREE.MeshBasicMaterial( { map: this.TextureAnimator.texture } );
+        // var cubeGeometry = new THREE.CubeGeometry( 500, 500, 500 );
+        // let cube = new THREE.Mesh( cubeGeometry, explosionMaterial );
+        // cube.position.set(0,26,0);
+        // this.wrapper.scene.add(cube);
+
+        this.sprites.bg = SpriteLoader.load(sprites.bg.path, sprites.bg.scale);
+        this.wrapper.scene.add(this.sprites.bg);
 
         this.wrapper.sceneOrtho.add(SpriteLoader.load(sprites.roulette1.path, sprites.roulette1.scale));
         this.wrapper.sceneOrtho.add(SpriteLoader.load(sprites.roulette3.path, sprites.roulette3.scale));
@@ -181,6 +201,7 @@ export class RouletteGame
         let seconds = THREE.Math.randInt(0, 3);
 
         this.DesiredNumber = this.RouletteNumbers[THREE.Math.randInt(0, this.RouletteNumbers.length - 1)];
+        // this.DesiredNumber = 0;
         console.log("DesiredNumber: " + this.DesiredNumber);
         this.Timer.value = (minutes * 60 + seconds) * 1000;
 
@@ -218,26 +239,24 @@ export class RouletteGame
         this.sprites.number_pad.material.rotation = -GameHelper.lerp(this.offset, DesiredRotation, GameHelper.easeOutQuart(this.time / this.SpinDuration));
         this.sprites.roulette_lights.material.rotation = -GameHelper.lerp(this.offset, DesiredRotation, GameHelper.easeOutQuart(this.time / this.SpinDuration));
 
-        if (this.WinNumber.texture.text != this.GetNumberBasedOnRotation())
-        {
-            // this.sprites.arrow.material.rotation = 0;
-            this.arrow.frequency = GameHelper.lerp(1, 0.01, (this.sprites.number_pad.speed / 11));
-        }
-
         this.WinNumber.texture.text = this.GetNumberBasedOnRotation();
     };
 
     StartArrowSpin()
     {
+        // TweenMax.fromTo(this.sprites.arrow.material, this.arrow.frequency, { rotation: 0 }, { rotation: Math.PI / 4 });
+        // setTimeout(this.StartArrowSpin.bind(this), (this.arrow.frequency + 0.01) * 1000);
+
         // todo
         // this.arrow.frequency = GameHelper.lerp(0.01, 1.5, GameHelper.easeOutQuart(this.time / (this.SpinDuration * this.SpinCount)));
         // console.log(this.arrow.frequency);
-        
+
+        // this.arrow.frequency = THREE.Math.mapLinear(this.sprites.number_pad.speed, 0 , 11, 1 , 0);
+        // console.log(this.sprites.number_pad.speed, this.arrow.frequency);
 
         if (this.time + 2.1 > this.SpinDuration)
         {
             TweenMax.killTweensOf(this.arrow.animation);
-            // // this.sprites.arrow.material.rotation = 0;
             TweenMax.fromTo(this.sprites.arrow.material, 0.1, { rotation: this.sprites.arrow.material.rotation }, { rotation: 0 });
             return;
         }
@@ -263,8 +282,11 @@ export class RouletteGame
         this.time = 0;
         this.CurrentGameState = GameState.idle;
         this.offset = this.sprites.number_pad.material.rotation / (Math.PI * 2);
-
-
+        this.arrow.frequency = 0;
+        // TweenMax.killTweensOf(this.arrow.animation);
+        // TweenMax.fromTo(this.sprites.arrow.material, 0.1, { rotation: this.sprites.arrow.material.rotation }, { rotation: 0 });
+        console.log('Start Arrow Spin stopped!!!');
+        // reseting game
         setTimeout(this.StartCountDown.bind(this), 5000);
     };
 
@@ -274,19 +296,36 @@ export class RouletteGame
         for (let i = 0; i < this.particles.count; ++i)
         {
             let x = THREE.Math.randFloat(-this.wrapper.width, this.wrapper.width);
-            let y = THREE.Math.randFloat(this.wrapper.height, this.wrapper.height);
+            let y = THREE.Math.randFloat(-this.wrapper.height, this.wrapper.height);
             let z = 0;
 
             this.particles.originPositions.push(x);
             this.particles.originPositions.push(y);
             this.particles.originPositions.push(z);
 
-            this.particles.destPositions.push(THREE.Math.randFloat(-this.wrapper.width, -this.wrapper.width + 500));
-            this.particles.destPositions.push(THREE.Math.randFloat(-this.wrapper.height, -this.wrapper.height + 500));
+            this.particles.destPositions.push(0);
+            this.particles.destPositions.push(0);
             this.particles.destPositions.push(0);
 
             this.particles.colors.push(color.setHSL(1, 1, 0.6));
         }
+
+        // GameHelper.readColorBufferFromTexture(sprites.sand_time.path).then((buffer) =>
+        // {
+        //     console.log(buffer);
+        //     let count = 0;
+        //     let index = 0;
+        //     for (let i = 0, len = buffer.length; i < len; i += 4)
+        //     {
+        //         index = i / 4;
+        //         this.particles.destPositions[count * 3] = index % this.wrapper.width;
+        //         this.particles.destPositions[count * 3 + 1] = index / this.wrapper.width | 0;
+        //         count++;
+        //     }
+
+        //     console.log(this.particles.destPositions);
+
+        // });
 
 
         this.particles.geo = new THREE.BufferGeometry();
@@ -298,17 +337,21 @@ export class RouletteGame
             uniforms: this.particles.uniforms,
             vertexShader: this.vertexShaderCode(),
             fragmentShader: this.fragmentShaderCode(),
-            blending: THREE.NormalBlending,
-            depthTest: false,
+            blending: THREE.AdditiveBlending,
+            // blendSrc: THREE.OneMinusSrcAlphaFactor,
+            // blendDst: THREE.DstColorFactor,
+            // alphaTest: 0.4,
             transparent: true,
             vertexColors: true
-        })
+        });
+
 
         this.particles.system = new THREE.Points(this.particles.geo, this.particles.material);
-        this.particles.system.scale.set(50, 50, 1);
-        this.wrapper.scene.add(this.particles.system);
 
+        this.wrapper.scene.add(this.particles.system);
     }
+
+
 
     vertexShaderCode()
     {
@@ -318,6 +361,8 @@ export class RouletteGame
             attribute vec3 dest_position;
             varying vec3 vColor;
             varying float vAlpha;
+            varying vec2 vUv;
+
             vec3 mod289(vec3 x) {
                 return x - floor(x * (1.0 / 289.0)) * 289.0;
             }
@@ -395,6 +440,7 @@ export class RouletteGame
             
             void main()
             {
+                vUv = uv;
                 vec3 pos = position;
                 float animation = smoothstep(fract(dest_position.y * 421.0) * 0.5, 1.0 - fract(dest_position.y * 421.0) * 0.5, uAnimation );
                 pos.x += snoise( position.xy * 0.02 + time) * (dest_position.y * 800.0 + 200.0);
@@ -412,8 +458,6 @@ export class RouletteGame
                 vec3 lerped = mix(pos, dest_position, animation);
                 vColor = color;
                 gl_Position = projectionMatrix * modelViewMatrix * vec4(lerped, 1.0);
-                // gl_Position = projectionMatrix * modelViewMatrix * vec4(dest_position, 1.0);
-                // gl_Position = vec4(dest_position, 1.0);
                 gl_PointSize = 5.0;
             }
     `;
@@ -425,14 +469,15 @@ export class RouletteGame
             uniform float time;
             uniform vec2 resolution;  
             uniform sampler2D pointTexture;
+
             varying vec3 vColor;
             varying float vAlpha;
+            varying vec2 vUv;
 
             void main()	{
+                vec4 ParticlePointTexture = texture2D(pointTexture, gl_PointCoord);
                 vec3 c = vec3(1.0, 1.0, 0.0);
-                vec3 c2 = vec3(1.0, 1.0, 1.0);
-                // gl_FragColor = vec4(c, 1.0);
-                gl_FragColor = vec4(mix(c, c2, 1.0), 1.0) * texture2D(pointTexture, gl_PointCoord) * vec4(10.0,10.0,10.0, 1.0);
+                gl_FragColor = vec4(c, 1.0) * ParticlePointTexture;
             }
         `;
     }

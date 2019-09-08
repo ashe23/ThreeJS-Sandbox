@@ -17,6 +17,12 @@ export class ThreeJSWrapper
         this.scene = new THREE.Scene();
         this.sceneOrtho = new THREE.Scene();
 
+        this.rtTexture = new THREE.WebGLRenderTarget(this.width, this.height, {
+            format: THREE.RGBAFormat,
+            type: THREE.UnsignedByteType
+        });
+        this.rtBuffer = new Uint8Array(this.width * this.height * 4);
+
         this.renderer = new THREE.WebGLRenderer();
         this.renderer.setPixelRatio(window.devicePixelRatio);
         this.renderer.autoClear = false;
@@ -26,7 +32,7 @@ export class ThreeJSWrapper
         this.stats = new Stats();
         this.stats.showPanel(0);
         document.body.appendChild(this.stats.dom);
-      
+
 
         this.OnWindowResize();
         window.addEventListener('resize', this.OnWindowResize.bind(this), false);
@@ -42,13 +48,31 @@ export class ThreeJSWrapper
         this.animate_callback();
 
         this.renderer.clear();
+
+        this.renderer.setRenderTarget(this.rtTexture);
+
         this.renderer.render(this.scene, this.camera);
         this.renderer.clearDepth();
         this.renderer.render(this.sceneOrtho, this.cameraOrtho);
 
+        this.renderer.setRenderTarget(null);
+
+        this.renderer.render(this.scene, this.camera);
+        this.renderer.clearDepth();
+        this.renderer.render(this.sceneOrtho, this.cameraOrtho);
+
+
+
+
         this.stats.end();
 
         requestAnimationFrame(this.animate.bind(this));
+    }
+
+    ReadBuffer()
+    {
+        this.renderer.readRenderTargetPixels(this.rtTexture, 0, 0, this.width, this.height, this.rtBuffer);
+        console.log(this.rtBuffer);
     }
 
     OnWindowResize()

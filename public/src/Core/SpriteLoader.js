@@ -7,8 +7,8 @@ export class SpriteLoader
         let spriteMap = new THREE.TextureLoader().load(path);
         let spriteMaterial = new THREE.SpriteMaterial({
             map: spriteMap,
-            color: 0xffffff,
-            blending: THREE.NormalBlending
+            blending: THREE.NormalBlending,
+            depthTest: false,
         });
         let sprite = new THREE.Sprite(spriteMaterial);
         sprite.scale.set(scale.x, scale.y, scale.z);
