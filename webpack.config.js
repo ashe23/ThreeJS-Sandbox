@@ -12,10 +12,20 @@ module.exports = {
     watch: true,
     devtool: 'source-map',
     module: {
-        rules: [{
-            test: /\.js$/,
-            exclude: /node_modules/,
-            use: ['babel-loader']
-        }]
+        rules: [
+            {
+                test: /\.js$/,
+                exclude: /node_modules/,
+                use: ['babel-loader']
+            },
+            {
+                test: /\.(glsl|vs|fs|vert|frag)$/,
+                exclude: /node_modules/,
+                use: [
+                    'raw-loader',
+                    'glslify-loader'
+                ]
+            }
+        ]
     }
 };

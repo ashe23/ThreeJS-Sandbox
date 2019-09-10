@@ -14,15 +14,16 @@ window.onload = () =>
         // todo add some loading screen for this
         game.LoadRouletteSprites();
         game.LoadTextSprites();
+        game.InitCanvasText();
         game.StartCountDown();
-        game.SpawnParticles();
-       
+        // game.SpawnParticles();
+        // game.canvasText.play();
 
-        TweenMax.fromTo(game.particles.uniforms.uAnimation, 10, { value: 0 }, { value: 1 });
-        setTimeout(() =>
-        {
-            TweenMax.fromTo(game.particles.uniforms.uAnimation, 10, { value: 1 }, { value: 0 });
-        }, 11000);
+        // TweenMax.fromTo(game.particles.uniforms.uAnimation, 10, { value: 0 }, { value: 1 });
+        // setTimeout(() =>
+        // {
+        //     TweenMax.fromTo(game.particles.uniforms.uAnimation, 10, { value: 1 }, { value: 0 });
+        // }, 11000);
         // game.Spin();
 
         // setTimeout(() =>
@@ -69,26 +70,8 @@ window.onload = () =>
     }
     wrapper.animate_callback = () =>
     {
-        if (game.CurrentGameState === GameState.spinning)
-        {
-            game.time += game.step;
-            game.Spin();
-
-
-            if (game.time + 1 > game.SpinDuration)
-            {
-                game.StopSpin();
-            }
-        }
-
-
-        game.sprites.number_pad.speed = Math.abs((game.sprites.number_pad.material.rotation - game.lastTickRotation) / wrapper.clock.getDelta());
-        game.arrow.frequency = GameHelper.lerp(0.01, 1.0, GameHelper.easeOutQuart(game.time / (game.SpinDuration * game.SpinCount)));
-
-
-        game.lastTickRotation = game.sprites.number_pad.material.rotation;
-        game.particles.uniforms.time.value = wrapper.clock.getElapsedTime();
-        
+        game.SpinLoop();
+       
         // game.TextureAnimator.update(wrapper.clock.getDelta() * 1000);
 
     }

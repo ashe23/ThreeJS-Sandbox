@@ -1,7 +1,12 @@
 import { SpriteLoader } from './SpriteLoader.js';
 import { GameHelper } from './GameHelper.js';
 import { TextureAnimator } from './TextureAnimator.js'
-
+import vertexshaderCode from '../../shaders/main.vs'
+import fragmentShaderCode from '../../shaders/main.fs'
+import dissolveVertShaderCode from '../../shaders/dissolve.vs'
+import dissolveFragShaderCode from '../../shaders/dissolve.fs'
+import numbersVertShaderCode from '../../shaders/numbers.vs'
+import numbersFragShaderCode from '../../shaders/numbers.fs'
 
 export let sprites = {
     bg: {
@@ -84,11 +89,11 @@ export class RouletteGame
             originPositions: [],
             colors: [],
             geo: {},
+            play: {},
             uniforms: {
                 time: { value: 1 },
                 uAnimation: { value: 1 },
                 pointTexture: { value: new THREE.TextureLoader().load(sprites.point.path) },
-                // dissolveTexture: { value: new THREE.TextureLoader().load(sprites.dissolve) },
             },
             material: {},
             system: {}
@@ -124,6 +129,18 @@ export class RouletteGame
         };
 
         this.TextureAnimator = {};
+        this.canvasText = {
+            material: {},
+            play: {},
+            reverse: {},
+            mesh: {},
+            geometry: {},
+            str: '00:04',
+            fontSize: 90,
+            font: "Roboto",
+            lineHeight: 1.1,
+            baseLine: 0.9,
+        };
     }
 
     LoadRouletteSprites()
@@ -135,8 +152,8 @@ export class RouletteGame
         // var explosionMaterial = new THREE.MeshBasicMaterial( { map: this.TextureAnimator.texture } );
         // var cubeGeometry = new THREE.CubeGeometry( 500, 500, 500 );
         // let cube = new THREE.Mesh( cubeGeometry, explosionMaterial );
-        // cube.position.set(0,26,0);
-        // this.wrapper.scene.add(cube);
+        // cube.position.set(-1,-2,0);
+        // this.wrapper.sceneOrtho.add(cube);
 
         this.sprites.bg = SpriteLoader.load(sprites.bg.path, sprites.bg.scale);
         this.wrapper.scene.add(this.sprites.bg);
@@ -150,6 +167,44 @@ export class RouletteGame
         this.sprites.number_pad = SpriteLoader.load(sprites.number_pad.path, sprites.number_pad.scale);
         this.wrapper.sceneOrtho.add(this.sprites.number_pad);
 
+
+        // adding dissolve effect for sandtime
+        // let spriteMap = new THREE.TextureLoader().load(sprites.sand_time.path);
+        // let dissolveGeo = new THREE.PlaneGeometry(20, 20, 32);
+        // let dissolveMaterial = new THREE.ShaderMaterial({
+        //     uniforms: {
+        //         uThreshold: {
+        //             value: 0.5
+        //         },
+        //         uEdgeWidth: {
+        //             value: 0.04
+        //         },
+        //         uEdgeColor: {
+        //             value: [0, 229, 255]
+        //         },
+        //         uColor: {
+        //             value: [20, 20, 20]
+        //         },
+        //         uFrequency: {
+        //             value: 0.03
+        //         },
+        //         sandTimeTexture: {
+        //             value: spriteMap
+        //         }
+        //     },
+        //     vertexShader: dissolveVertShaderCode,
+        //     fragmentShader: dissolveFragShaderCode,
+        //     transparent: true,
+        //     vertexColors: true
+        // });
+        // let plane = new THREE.Mesh(dissolveGeo, dissolveMaterial);
+        // plane.position.set(-400, -300, 0);
+        // plane.scale.set(10, 10, 10);
+        // this.wrapper.sceneOrtho.add(plane);
+
+        // TweenMax.fromTo(plane.material.uniforms.uThreshold, 2, { value: 0 }, { value: 1 });
+        // setTimeout(() => { TweenMax.fromTo(plane.material.uniforms.uThreshold, 2, { value: 1 }, { value: 0 }); }, 3000);
+
         this.sprites.sand_time = SpriteLoader.load(sprites.sand_time.path, sprites.sand_time.scale);
         this.wrapper.sceneOrtho.add(this.sprites.sand_time);
         this.sprites.sand_time.center.set(8.5, 4.5);
@@ -160,6 +215,31 @@ export class RouletteGame
 
     }
 
+    SpinLoop()
+    {
+        if (this.CurrentGameState === GameState.spinning)
+        {
+            this.time += this.step;
+            this.Spin();
+
+
+            if (this.time + 1 > this.SpinDuration)
+            {
+                this.StopSpin();
+            }
+        }
+
+
+        this.arrow.frequency = GameHelper.lerp(0.01, 1.0, GameHelper.easeOutQuart(this.time / (this.SpinDuration * this.SpinCount)));
+
+
+        this.particles.uniforms.time.value = this.wrapper.clock.getElapsedTime();
+        this.canvasText.material.uniforms.uTime.value = this.wrapper.clock.getElapsedTime();
+        this.canvasText.material.uniforms.uOffset.value.set(-this.wrapper.width / 2, -this.wrapper.height / 2);
+
+        this.canvasText.mesh.translateZ(-1 / 2 * Math.tan(this.wrapper.camera.fov / 360 * Math.PI) / this.wrapper.height);
+    }
+
     LoadTextSprites()
     {
         // Timer Text
@@ -168,6 +248,7 @@ export class RouletteGame
             fontSize: 30,
             text: '00:00',
         });
+
         this.Timer.material = new THREE.SpriteMaterial({
             color: 0xffffbb,
             map: this.Timer.texture
@@ -176,7 +257,7 @@ export class RouletteGame
         let TimerSprite = new THREE.Sprite(this.Timer.material);
         TimerSprite.scale.setX(this.Timer.texture.image.width / this.Timer.texture.image.height).multiplyScalar(40);
         TimerSprite.center.set(7.48, 8.5);
-        this.wrapper.sceneOrtho.add(TimerSprite);
+        // this.wrapper.sceneOrtho.add(TimerSprite);
 
         // Win Number Text
         this.WinNumber.texture = new THREE.TextTexture({
@@ -198,7 +279,7 @@ export class RouletteGame
     StartCountDown()
     {
         let minutes = THREE.Math.randInt(0, 0);
-        let seconds = THREE.Math.randInt(0, 3);
+        let seconds = THREE.Math.randInt(5, 10);
 
         this.DesiredNumber = this.RouletteNumbers[THREE.Math.randInt(0, this.RouletteNumbers.length - 1)];
         // this.DesiredNumber = 0;
@@ -206,6 +287,11 @@ export class RouletteGame
         this.Timer.value = (minutes * 60 + seconds) * 1000;
 
         TweenMax.fromTo(this.Timer.material, 2, { opacity: 0 }, { opacity: 1 });
+        TweenMax.fromTo(this.particles.uniforms.uAnimation, this.Timer.value / 1000, { value: 0 }, { value: 1 });
+        TweenMax.fromTo(this.particles.system, this.Timer.value / 1000, { opacity: 0 }, { opacity: 1 });
+
+        this.UpdateCanvasText();
+        this.canvasText.play();
 
         setTimeout(() =>
         {
@@ -223,11 +309,16 @@ export class RouletteGame
             console.log('Timer stopped');
 
             TweenMax.fromTo(this.Timer.material, 2, { opacity: 1 }, { opacity: 0 });
+            this.canvasText.reverse();
+
             return;
         }
 
         this.Timer.value -= 1000;
+        this.canvasText.str = GameHelper.MllisToMinutesAndSeconds(this.Timer.value);
         this.Timer.texture.text = GameHelper.MllisToMinutesAndSeconds(this.Timer.value);
+        this.UpdateCanvasText();
+        this.canvasText.material.uniforms.uAnimation.value = 1;
     }
 
     Spin()
@@ -287,6 +378,7 @@ export class RouletteGame
         // TweenMax.fromTo(this.sprites.arrow.material, 0.1, { rotation: this.sprites.arrow.material.rotation }, { rotation: 0 });
         console.log('Start Arrow Spin stopped!!!');
         // reseting game
+        TweenMax.fromTo(this.particles.uniforms.uAnimation, 5, { value: 1 }, { value: 0 });
         setTimeout(this.StartCountDown.bind(this), 5000);
     };
 
@@ -303,30 +395,12 @@ export class RouletteGame
             this.particles.originPositions.push(y);
             this.particles.originPositions.push(z);
 
-            this.particles.destPositions.push(0);
+            this.particles.destPositions.push(-this.wrapper.width + 200);
             this.particles.destPositions.push(0);
             this.particles.destPositions.push(0);
 
             this.particles.colors.push(color.setHSL(1, 1, 0.6));
         }
-
-        // GameHelper.readColorBufferFromTexture(sprites.sand_time.path).then((buffer) =>
-        // {
-        //     console.log(buffer);
-        //     let count = 0;
-        //     let index = 0;
-        //     for (let i = 0, len = buffer.length; i < len; i += 4)
-        //     {
-        //         index = i / 4;
-        //         this.particles.destPositions[count * 3] = index % this.wrapper.width;
-        //         this.particles.destPositions[count * 3 + 1] = index / this.wrapper.width | 0;
-        //         count++;
-        //     }
-
-        //     console.log(this.particles.destPositions);
-
-        // });
-
 
         this.particles.geo = new THREE.BufferGeometry();
         this.particles.geo.addAttribute('position', new THREE.Float32BufferAttribute(this.particles.originPositions, 3));
@@ -335,151 +409,16 @@ export class RouletteGame
 
         this.particles.material = new THREE.ShaderMaterial({
             uniforms: this.particles.uniforms,
-            vertexShader: this.vertexShaderCode(),
-            fragmentShader: this.fragmentShaderCode(),
+            vertexShader: vertexshaderCode,
+            fragmentShader: fragmentShaderCode,
             blending: THREE.AdditiveBlending,
-            // blendSrc: THREE.OneMinusSrcAlphaFactor,
-            // blendDst: THREE.DstColorFactor,
-            // alphaTest: 0.4,
             transparent: true,
             vertexColors: true
         });
 
 
         this.particles.system = new THREE.Points(this.particles.geo, this.particles.material);
-
         this.wrapper.scene.add(this.particles.system);
-    }
-
-
-
-    vertexShaderCode()
-    {
-        return `
-            uniform float time;
-            uniform float uAnimation;
-            attribute vec3 dest_position;
-            varying vec3 vColor;
-            varying float vAlpha;
-            varying vec2 vUv;
-
-            vec3 mod289(vec3 x) {
-                return x - floor(x * (1.0 / 289.0)) * 289.0;
-            }
-        
-            vec2 mod289(vec2 x) {
-                return x - floor(x * (1.0 / 289.0)) * 289.0;
-            }
-        
-            vec3 permute(vec3 x) {
-                return mod289(((x*34.0)+1.0)*x);
-            }
-        
-            float snoise(vec2 v)
-                {
-                const vec4 C = vec4(0.211324865405187,  // (3.0-sqrt(3.0))/6.0
-                                    0.366025403784439,  // 0.5*(sqrt(3.0)-1.0)
-                                -0.577350269189626,  // -1.0 + 2.0 * C.x
-                                    0.024390243902439); // 1.0 / 41.0
-            // First corner
-                vec2 i  = floor(v + dot(v, C.yy) );
-                vec2 x0 = v -   i + dot(i, C.xx);
-        
-            // Other corners
-                vec2 i1;
-                //i1.x = step( x0.y, x0.x ); // x0.x > x0.y ? 1.0 : 0.0
-                //i1.y = 1.0 - i1.x;
-                i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
-                // x0 = x0 - 0.0 + 0.0 * C.xx ;
-                // x1 = x0 - i1 + 1.0 * C.xx ;
-                // x2 = x0 - 1.0 + 2.0 * C.xx ;
-                vec4 x12 = x0.xyxy + C.xxzz;
-                x12.xy -= i1;
-        
-            // Permutations
-                i = mod289(i); // Avoid truncation effects in permutation
-                vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 ))
-                    + i.x + vec3(0.0, i1.x, 1.0 ));
-        
-                vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
-                m = m*m ;
-                m = m*m ;
-        
-            // Gradients: 41 points uniformly over a line, mapped onto a diamond.
-            // The ring size 17*17 = 289 is close to a multiple of 41 (41*7 = 287)
-        
-                vec3 x = 2.0 * fract(p * C.www) - 1.0;
-                vec3 h = abs(x) - 0.5;
-                vec3 ox = floor(x + 0.5);
-                vec3 a0 = x - ox;
-        
-            // Normalise gradients implicitly by scaling m
-            // Approximation of: m *= inversesqrt( a0*a0 + h*h );
-                m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
-        
-            // Compute final noise value at P
-                vec3 g;
-                g.x  = a0.x  * x0.x  + h.x  * x0.y;
-                g.yz = a0.yz * x12.xz + h.yz * x12.yw;
-                return 130.0 * dot(m, g);
-            }
-            // float rand(vec2 n) { 
-            //   return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453);
-            // }
-            
-            // float noise(vec2 p){
-            //   vec2 ip = floor(p);
-            //   vec2 u = fract(p);
-            //   u = u*u*(3.0-2.0*u);
-            
-            //   float res = mix(
-            //     mix(rand(ip),rand(ip+vec2(1.0,0.0)),u.x),
-            //     mix(rand(ip+vec2(0.0,1.0)),rand(ip+vec2(1.0,1.0)),u.x),u.y);
-            //   return res*res;
-            // }
-            
-            void main()
-            {
-                vUv = uv;
-                vec3 pos = position;
-                float animation = smoothstep(fract(dest_position.y * 421.0) * 0.5, 1.0 - fract(dest_position.y * 421.0) * 0.5, uAnimation );
-                pos.x += snoise( position.xy * 0.02 + time) * (dest_position.y * 800.0 + 200.0);
-                pos.y += snoise( position.xy * 0.01 + time) * (fract(dest_position.y * 32.0) * 800.0 + 200.0);
-                
-                // rotation 
-                float d = length(pos);
-                float angle = atan(pos.y, pos.x) + pow(d / 300.0, 0.3) * pow(animation, 0.5);
-                
-                pos.x = cos(angle) * d;
-                pos.y = sin(angle) * d;
-                vAlpha = animation;
-                float x = mix(dest_position.x, pos.x, animation);
-                float y = mix(dest_position.y, pos.y, animation);
-                vec3 lerped = mix(pos, dest_position, animation);
-                vColor = color;
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(lerped, 1.0);
-                gl_PointSize = 5.0;
-            }
-    `;
-    }
-
-    fragmentShaderCode()
-    {
-        return `
-            uniform float time;
-            uniform vec2 resolution;  
-            uniform sampler2D pointTexture;
-
-            varying vec3 vColor;
-            varying float vAlpha;
-            varying vec2 vUv;
-
-            void main()	{
-                vec4 ParticlePointTexture = texture2D(pointTexture, gl_PointCoord);
-                vec3 c = vec3(1.0, 1.0, 0.0);
-                gl_FragColor = vec4(c, 1.0) * ParticlePointTexture;
-            }
-        `;
     }
 
     GetNumberBasedOnRotation()
@@ -491,5 +430,96 @@ export class RouletteGame
         }
 
         return this.RouletteNumbers[this.RouletteNumbers.length - index].toString();
+    }
+
+    InitCanvasText()
+    {
+        this.canvasText.canvas = document.createElement('canvas');
+        this.canvasText.ctx = this.canvasText.canvas.getContext('2d');
+
+        this.canvasText.geometry = new THREE.BufferGeometry();
+        this.canvasText.geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array(this.particles.count * 3), 3));
+        this.canvasText.geometry.addAttribute('extras', new THREE.BufferAttribute(new Float32Array(this.particles.count * 2), 2));
+
+        this.canvasText.material = new THREE.ShaderMaterial({
+            uniforms: {
+                uTime: { type: 'f', value: 0 },
+                uAnimation: { type: 'f', value: 0 },
+                uOffset: { type: 'v2', value: new THREE.Vector2() }
+            },
+            vertexShader: numbersVertShaderCode,
+            fragmentShader: numbersFragShaderCode,
+            blending: THREE.AdditiveBlending,
+            transparent: true,
+            depthWrite: true,
+            depthTest: false
+        });
+
+        this.canvasText.play = () =>
+        {
+            TweenMax.fromTo(this.canvasText.material.uniforms.uAnimation, 1, { value: 0 }, { value: 1 });
+        };
+
+        this.canvasText.reverse = () =>
+        {
+            TweenMax.fromTo(this.canvasText.material.uniforms.uAnimation, 2, { value: 1 }, { value: 0 });
+        };
+
+        this.canvasText.mesh = new THREE.Points(this.canvasText.geometry, this.canvasText.material);
+        this.canvasText.mesh.scale.set(0.4, 0.4, 0.4);
+
+        this.wrapper.sceneOrtho.add(this.canvasText.mesh);
+
+        this.UpdateCanvasText();
+    }
+
+    UpdateCanvasText()
+    {
+
+        this.canvasText.ctx.font = this.canvasText.fontSize + 'px ' + this.canvasText.font;
+        let metrics = this.canvasText.ctx.measureText(this.canvasText.str);
+        let width = this.canvasText.canvas.width = Math.ceil(metrics.width) || 1;
+        let height = this.canvasText.canvas.height = Math.ceil(this.canvasText.lineHeight * this.canvasText.fontSize * this.canvasText.baseLine);
+
+        // clearing old data
+        this.canvasText.ctx.clearRect(0, 0, this.canvasText.canvas.width, this.canvasText.canvas.height);
+        for (let i = 0; i < this.canvasText.geometry.attributes.position.array.length; ++i)
+        {
+            this.canvasText.geometry.attributes.position.array[i] = 0;
+        }
+        for (let i = 0; i < this.canvasText.geometry.attributes.extras.array.length; ++i)
+        {
+            this.canvasText.geometry.attributes.extras.array[i] = 0;
+        }
+
+        // redrawing new one
+        this.canvasText.ctx.font = this.canvasText.fontSize + 'px ' + this.canvasText.font;
+        this.canvasText.ctx.fillStyle = '#000';
+        this.canvasText.ctx.fillText(this.canvasText.str, 0, this.canvasText.fontSize * this.canvasText.lineHeight * this.canvasText.baseLine + 1);
+
+
+        let vertices = this.canvasText.geometry.attributes.position.array;
+        let extras = this.canvasText.geometry.attributes.extras.array;
+        let index;
+        let data = this.canvasText.ctx.getImageData(0, 0, width, height).data;
+        let count = 0;
+
+        for (let i = 0, len = data.length; i < len; i += 4)
+        {
+            if (data[i + 3] > 0)
+            {
+                index = i / 4;
+                vertices[count * 3] = index % width;
+                vertices[count * 3 + 1] = index / width | 0;
+                extras[count * 2] = data[i + 3] / 255;
+                extras[count * 2 + 1] = Math.random();
+                count++;
+            }
+        }
+
+        this.canvasText.mesh.position.set(-this.canvasText.canvas.width - 375, -this.canvasText.canvas.height - 200, 0);
+        this.canvasText.geometry.attributes.position.needsUpdate = true;
+        this.canvasText.geometry.attributes.extras.needsUpdate = true;
+
     }
 }

@@ -9,7 +9,7 @@ export class ThreeJSWrapper
         this.width = window.innerWidth;
         this.height = window.innerHeight;
         this.camera = new THREE.PerspectiveCamera(60, this.width / this.height, 1, 2100);
-        this.camera.position.z = 1500;
+        this.camera.position.z = 200;
 
         this.cameraOrtho = new THREE.OrthographicCamera(-this.width / 2, this.width / 2, this.height / 2, -this.height / 2, 1, 10);
         this.cameraOrtho.position.z = 1;
