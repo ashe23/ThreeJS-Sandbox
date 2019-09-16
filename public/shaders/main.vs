@@ -99,6 +99,6 @@ void main()
     float y = mix(dest_position.y, pos.y, animation);
     vec3 lerped = mix(pos, dest_position, animation);
     vColor = color;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(lerped, 1.0);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
     gl_PointSize = 5.0;
 }
