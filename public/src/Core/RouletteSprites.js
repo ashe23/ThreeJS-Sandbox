@@ -22,7 +22,7 @@ export const Sprites = {
     sand_time:
     {
         path: 'textures/Roulette/T_SandTime.png',
-        scale: new THREE.Vector3(70, 100, 1),
+        scale: new THREE.Vector3(1.5, 2, 1),
     },
     roulette1:
     {

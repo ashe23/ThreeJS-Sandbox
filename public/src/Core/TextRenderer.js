@@ -113,6 +113,12 @@ export class TextRenderer
         TweenMax.fromTo(this.canvasText.material.uniforms.uAnimation, d, { value: 1 }, { value: 0 });
     }
 
+    playScaleAnim()
+    {
+        TweenMax.fromTo(this, 5, { fontSize: 20 }, { fontSize: 40 });
+        this.updateText();
+    }
+
     clearGeometryBuffers()
     {
         this.canvasText.ctx.clearRect(0, 0, this.canvasText.canvas.width, this.canvasText.canvas.height);

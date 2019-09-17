@@ -11,7 +11,7 @@ window.onload = () =>
     let wrapper = new ThreeJSWrapper();
 
     let TimerText = new TextRenderer('00:00', wrapper, 30, new THREE.Vector3(-wrapper.width / 2 + 115, -wrapper.height / 2 + 180, 0));
-    let WinNumberText = new TextRenderer('0', wrapper, 100, new THREE.Vector3(-20, 60, 0));
+    let WinNumberText = new TextRenderer('0', wrapper, 100, new THREE.Vector3(-25, 60, 0));
 
     let game = new RouletteGame(wrapper, TimerText, WinNumberText);
     let particles = new Particles(wrapper);

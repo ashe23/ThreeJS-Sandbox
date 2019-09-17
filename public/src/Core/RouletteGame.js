@@ -119,10 +119,11 @@ export class RouletteGame
         this.sprites.roulette3 = new DissolveSprite(this.wrapper, Sprites.roulette3.path, Sprites.roulette3.scale);
         this.sprites.lights = new DissolveSprite(this.wrapper, Sprites.roulette2.path, Sprites.roulette2.scale);
         this.sprites.arrow = new DissolveSprite(this.wrapper, Sprites.arrow.path, Sprites.arrow.scale, new THREE.Vector3(0, 250, 0));
+        this.sprites.sand_time = new DissolveSprite(this.wrapper, Sprites.sand_time.path, Sprites.sand_time.scale, new THREE.Vector3(-this.wrapper.width / 2 + 150, -this.wrapper.height / 2 + 80, 0));
 
-        this.sprites.sand_time = SpriteLoader.load(sprites.sand_time.path, sprites.sand_time.scale);
-        this.wrapper.spritesScene.add(this.sprites.sand_time);
-        this.sprites.sand_time.center.set(8.5, 4.5);
+        // this.sprites.sand_time = SpriteLoader.load(sprites.sand_time.path, sprites.sand_time.scale);
+        // this.wrapper.spritesScene.add(this.sprites.sand_time);
+        // this.sprites.sand_time.center.set(8.5, 4.5);
     }
 
     SpinLoop()
@@ -173,6 +174,12 @@ export class RouletteGame
 
         this.Timer.value = (minutes * 60 + seconds) * 1000;
         this.TimerText.play(2);
+
+        this.sprites.lights.appear();
+        this.sprites.number_pad.appear();
+        this.sprites.roulette3.appear();
+        this.sprites.roulette1.appear();
+        this.sprites.arrow.appear();
 
         setTimeout(() =>
         {
@@ -254,6 +261,13 @@ export class RouletteGame
         this.arrow.frequency = 0;
         console.log('Start Arrow Spin stopped!!!');
 
+        this.sprites.lights.disappear();
+        this.sprites.number_pad.disappear();
+        this.sprites.roulette3.disappear();
+        this.sprites.roulette1.disappear();
+        this.sprites.arrow.disappear();
+
+        // this.WinNumberText.playScaleAnim();
         // reseting game        
         setTimeout(this.StartCountDown.bind(this), 5000);
     };
