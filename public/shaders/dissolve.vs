@@ -18,22 +18,22 @@ vec4 grad4(float j, vec4 ip){
 float snoise(vec4 v){
   const vec2  C = vec2( 0.138196601125010504,  // (5 - sqrt(5))/20  G4
                         0.309016994374947451); // (sqrt(5) - 1)/4   F4
-// First corner
+  // First corner
   vec4 i  = floor(v + dot(v, C.yyyy) );
   vec4 x0 = v -   i + dot(i, C.xxxx);
 
-// Other corners
+  // Other corners
 
-// Rank sorting originally contributed by Bill Licea-Kane, AMD (formerly ATI)
+  // Rank sorting originally contributed by Bill Licea-Kane, AMD (formerly ATI)
   vec4 i0;
 
   vec3 isX = step( x0.yzw, x0.xxx );
   vec3 isYZ = step( x0.zww, x0.yyz );
-//  i0.x = dot( isX, vec3( 1.0 ) );
+  //  i0.x = dot( isX, vec3( 1.0 ) );
   i0.x = isX.x + isX.y + isX.z;
   i0.yzw = 1.0 - isX;
 
-//  i0.y += dot( isYZ.xy, vec2( 1.0 ) );
+  //  i0.y += dot( isYZ.xy, vec2( 1.0 ) );
   i0.y += isYZ.x + isYZ.y;
   i0.zw += 1.0 - isYZ.xy;
 
@@ -51,7 +51,7 @@ float snoise(vec4 v){
   vec4 x3 = x0 - i3 + 3.0 * C.xxxx;
   vec4 x4 = x0 - 1.0 + 4.0 * C.xxxx;
 
-// Permutations
+  // Permutations
   i = mod(i, 289.0); 
   float j0 = permute( permute( permute( permute(i.w) + i.z) + i.y) + i.x);
   vec4 j1 = permute( permute( permute( permute (
@@ -59,9 +59,9 @@ float snoise(vec4 v){
            + i.z + vec4(i1.z, i2.z, i3.z, 1.0 ))
            + i.y + vec4(i1.y, i2.y, i3.y, 1.0 ))
            + i.x + vec4(i1.x, i2.x, i3.x, 1.0 ));
-// Gradients
-// ( 7*7*6 points uniformly over a cube, mapped onto a 4-octahedron.)
-// 7*7*6 = 294, which is close to the ring size 17*17 = 289.
+  // Gradients
+  // ( 7*7*6 points uniformly over a cube, mapped onto a 4-octahedron.)
+  // 7*7*6 = 294, which is close to the ring size 17*17 = 289.
 
   vec4 ip = vec4(1.0/294.0, 1.0/49.0, 1.0/7.0, 0.0) ;
 
@@ -71,7 +71,7 @@ float snoise(vec4 v){
   vec4 p3 = grad4(j1.z, ip);
   vec4 p4 = grad4(j1.w, ip);
 
-// Normalise gradients
+  // Normalise gradients
   vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));
   p0 *= norm.x;
   p1 *= norm.y;
@@ -79,7 +79,7 @@ float snoise(vec4 v){
   p3 *= norm.w;
   p4 *= taylorInvSqrt(dot(p4,p4));
 
-// Mix contributions from the five corners
+  // Mix contributions from the five corners
   vec3 m0 = max(0.6 - vec3(dot(x0,x0), dot(x1,x1), dot(x2,x2)), 0.0);
   vec2 m1 = max(0.6 - vec2(dot(x3,x3), dot(x4,x4)            ), 0.0);
   m0 = m0 * m0;
@@ -94,7 +94,7 @@ float snoise(vec4 v){
 float fbm(vec4 x) {
 	float v = 0.0;
 	float a = 0.5;
-	vec4 shift = vec4(100.);
+	vec4 shift = vec4(100.0);
 	for (int i = 0; i < NUM_OCTAVES; ++i) {
 		v += a * snoise(x);
 		x = x * 2.0 + shift;
@@ -118,8 +118,8 @@ varying vec2 vUv;
 	
 void main() {
 	vUv = uv;
-	vNoise = fbm(vec4(position*uFrequency, 0.));
-	vNoise = map(vNoise,-0.6,0.6,0.,1. - uEdgeWidth);
+	vNoise = fbm(vec4(position * uFrequency, 0.0));
+	vNoise = map(vNoise, -0.8, 0.8, 0.0, 1.0 - uEdgeWidth);
 	vec4 modelViewPosition = modelViewMatrix * vec4( position, 1.0 );
 	vViewPosition = -modelViewPosition.xyz;
 	gl_Position = projectionMatrix * modelViewPosition;

@@ -14,8 +14,14 @@ export class ThreeJSWrapper
         this.cameraOrtho = new THREE.OrthographicCamera(-this.width / 2, this.width / 2, this.height / 2, -this.height / 2, 1, 10);
         this.cameraOrtho.position.z = 1;
 
+        this.bgScene = new THREE.Scene();
+        this.particlesScene = new THREE.Scene();
+        this.spritesScene = new THREE.Scene();
+        this.textScene = new THREE.Scene();
+
         this.scene = new THREE.Scene();
         this.sceneOrtho = new THREE.Scene();
+        this.scene2 = new THREE.Scene();
 
         this.rtTexture = new THREE.WebGLRenderTarget(this.width, this.height, {
             format: THREE.RGBAFormat,
@@ -49,19 +55,21 @@ export class ThreeJSWrapper
 
         this.renderer.clear();
 
-        this.renderer.setRenderTarget(this.rtTexture);
+        this.renderer.render(this.bgScene, this.cameraOrtho);
+        this.renderer.render(this.particlesScene, this.camera);
+        this.renderer.render(this.spritesScene, this.cameraOrtho);
+        this.renderer.render(this.textScene, this.cameraOrtho);
 
-        this.renderer.render(this.scene, this.camera);
+        // this.renderer.render(this.scene, this.camera);
         this.renderer.clearDepth();
-        this.renderer.render(this.sceneOrtho, this.cameraOrtho);
-
-        this.renderer.setRenderTarget(null);
-
-        this.renderer.render(this.scene, this.camera);
-        this.renderer.clearDepth();
-        this.renderer.render(this.sceneOrtho, this.cameraOrtho);
+        // this.renderer.render(this.sceneOrtho, this.cameraOrtho);
+        // this.renderer.render(this.scene2, this.camera);
 
 
+        // this.renderer.render(this.scene, this.camera);
+        // this.renderer.clearDepth();
+        // this.renderer.render(this.sceneOrtho, this.cameraOrtho);
+        // this.renderer.render(this.scene2, this.cameraOrtho);
 
 
         this.stats.end();

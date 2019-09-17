@@ -2,7 +2,7 @@ import particlesVS from '../Core/glsl/particles.vs';
 import particlesFS from '../Core/glsl/particles.fs';
 
 
-export const PARTICLES_AMOUNT = 200;
+export const PARTICLES_AMOUNT = 300;
 
 export class Particles
 {

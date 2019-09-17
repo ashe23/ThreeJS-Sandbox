@@ -6,12 +6,12 @@ export const Sprites = {
     number_pad:
     {
         path: 'textures/Roulette/numberpad.png',
-        scale: new THREE.Vector3(400, 400, 1),
+        scale: new THREE.Vector3(8, 8, 1),
     },
     arrow:
     {
         path: 'textures/Roulette/T_Arrow.png',
-        scale: new THREE.Vector3(40, 60, 1),
+        scale: new THREE.Vector3(1, 1.5, 1),
     },
     point:
     {
@@ -27,17 +27,17 @@ export const Sprites = {
     roulette1:
     {
         path: 'textures/Roulette/roulette_1.png',
-        scale: new THREE.Vector3(500, 500, 1),
+        scale: new THREE.Vector3(10, 10, 1),
     },
     roulette2:
     {
         path: 'textures/Roulette/roulette_2.png',
-        scale: new THREE.Vector3(500, 500, 1),
+        scale: new THREE.Vector3(10, 10, 1),
     },
     roulette3:
     {
         path: 'textures/Roulette/roulette_3.png',
-        scale: new THREE.Vector3(200, 200, 1),
+        scale: new THREE.Vector3(5, 5, 1),
     },
     dissolve:
     {

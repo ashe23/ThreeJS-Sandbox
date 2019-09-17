@@ -1,12 +1,8 @@
 import { SpriteLoader } from './SpriteLoader.js';
 import { GameHelper } from './GameHelper.js';
-import { TextureAnimator } from './TextureAnimator.js'
-import vertexshaderCode from '../../shaders/main.vs'
-import fragmentShaderCode from '../../shaders/main.fs'
-import dissolveVertShaderCode from '../../shaders/dissolve.vs'
-import dissolveFragShaderCode from '../../shaders/dissolve.fs'
-import numbersVertShaderCode from '../../shaders/numbers.vs'
-import numbersFragShaderCode from '../../shaders/numbers.fs'
+import { DissolveSprite } from './DissolveSprite.js';
+import { Sprites } from './RouletteSprites.js';
+
 
 export let sprites = {
     bg: {
@@ -86,13 +82,10 @@ export class RouletteGame
         this.WinNumberText = WinNumberText;
 
         this.sprites = {
-            number_pad: {
-                speed: 0
-            },
+            number_pad: {},
             sand_time: {},
             arrow: {},
-            roulette_lights: {},
-            bg: {}
+            lights: {},
         };
 
         this.Timer = {
@@ -119,25 +112,17 @@ export class RouletteGame
 
     LoadRouletteSprites()
     {
-        this.sprites.bg = SpriteLoader.load(sprites.bg.path, sprites.bg.scale);
-        this.wrapper.scene.add(this.sprites.bg);      
+        this.wrapper.bgScene.add(SpriteLoader.load(sprites.bg.path, sprites.bg.scale));
 
-        this.wrapper.sceneOrtho.add(SpriteLoader.load(sprites.roulette1.path, sprites.roulette1.scale));
-        this.wrapper.sceneOrtho.add(SpriteLoader.load(sprites.roulette3.path, sprites.roulette3.scale));
-
-        this.sprites.roulette_lights = SpriteLoader.load(sprites.roulette2.path, sprites.roulette2.scale);
-        this.wrapper.sceneOrtho.add(this.sprites.roulette_lights);
-
-        this.sprites.number_pad = SpriteLoader.load(sprites.number_pad.path, sprites.number_pad.scale);
-        this.wrapper.sceneOrtho.add(this.sprites.number_pad);
+        this.sprites.roulette1 = new DissolveSprite(this.wrapper, Sprites.roulette1.path, Sprites.roulette1.scale);
+        this.sprites.number_pad = new DissolveSprite(this.wrapper, Sprites.number_pad.path, Sprites.number_pad.scale);
+        this.sprites.roulette3 = new DissolveSprite(this.wrapper, Sprites.roulette3.path, Sprites.roulette3.scale);
+        this.sprites.lights = new DissolveSprite(this.wrapper, Sprites.roulette2.path, Sprites.roulette2.scale);
+        this.sprites.arrow = new DissolveSprite(this.wrapper, Sprites.arrow.path, Sprites.arrow.scale, new THREE.Vector3(0, 250, 0));
 
         this.sprites.sand_time = SpriteLoader.load(sprites.sand_time.path, sprites.sand_time.scale);
-        this.wrapper.sceneOrtho.add(this.sprites.sand_time);
+        this.wrapper.spritesScene.add(this.sprites.sand_time);
         this.sprites.sand_time.center.set(8.5, 4.5);
-
-        this.sprites.arrow = SpriteLoader.load(sprites.arrow.path, sprites.arrow.scale);
-        this.wrapper.sceneOrtho.add(this.sprites.arrow);
-        this.sprites.arrow.position.set(0, 250, 0);
     }
 
     SpinLoop()
@@ -183,8 +168,9 @@ export class RouletteGame
         let seconds = THREE.Math.randInt(3, 5);
 
         this.DesiredNumber = this.RouletteNumbers[THREE.Math.randInt(0, this.RouletteNumbers.length - 1)];
-        // this.DesiredNumber = 0;
+
         console.log("DesiredNumber: " + this.DesiredNumber);
+
         this.Timer.value = (minutes * 60 + seconds) * 1000;
         this.TimerText.play(2);
 
@@ -218,10 +204,22 @@ export class RouletteGame
 
         let DesiredRotation = Math.PI * 2 * this.SpinCount + this.RouletteNumbers.indexOf(this.DesiredNumber) * this.SingleNumberAngle;
 
-        this.sprites.number_pad.material.rotation = -GameHelper.lerp(this.offset, DesiredRotation, GameHelper.easeOutQuart(this.time / this.SpinDuration));
-        this.sprites.roulette_lights.material.rotation = -GameHelper.lerp(this.offset, DesiredRotation, GameHelper.easeOutQuart(this.time / this.SpinDuration));
+        let rot = -GameHelper.lerp(this.offset, DesiredRotation, GameHelper.easeOutQuart(this.time / this.SpinDuration));
+        this.sprites.number_pad.mesh.rotation.set(0, 0, rot);
+        this.sprites.lights.mesh.rotation.set(0, 0, rot);
 
-        this.WinNumber.texture.text = this.GetNumberBasedOnRotation();
+        this.WinNumberText.text = this.GetNumberBasedOnRotation();
+
+        if (this.WinNumberText.text < 10)
+        {
+            this.WinNumberText.position = new THREE.Vector3(-25, 60, 0);
+        }
+        else
+        {
+            this.WinNumberText.position = new THREE.Vector3(-52, 60, 0);
+        }
+
+        this.WinNumberText.updateText();
     };
 
     StartArrowSpin()
@@ -229,21 +227,22 @@ export class RouletteGame
         if (this.time + 2.1 > this.SpinDuration)
         {
             TweenMax.killTweensOf(this.arrow.animation);
-            TweenMax.fromTo(this.sprites.arrow.material, 0.1, { rotation: this.sprites.arrow.material.rotation }, { rotation: 0 });
+            TweenMax.fromTo(this.sprites.arrow.mesh.rotation, 0.1, { z: this.sprites.arrow.mesh.rotation.z }, { z: 0 });
             return;
         }
 
         if (this.CurrentGameState === GameState.spinning)
         {
-            this.arrow.animation = TweenMax.fromTo(this.sprites.arrow.material, this.arrow.frequency, { rotation: 0 }, { rotation: Math.PI / 4 });
+            this.arrow.animation = TweenMax.fromTo(this.sprites.arrow.mesh.rotation, this.arrow.frequency, { z: 0 }, { z: Math.PI / 4 });
             setTimeout(this.StartArrowSpin.bind(this), (this.arrow.frequency + 0.01) * 1000);
             return;
         }
         else
         {
             console.log('Start Arrow Spin stopped!!!');
-            TweenMax.killTweensOf(this.arrow.animation);
-            TweenMax.fromTo(this.sprites.arrow.material, 0.1, { rotation: this.sprites.arrow.material.rotation }, { rotation: 0 });
+            // TweenMax.killTweensOf(this.arrow.animation);
+            console.log(this.sprites.arrow);
+            TweenMax.fromTo(this.sprites.arrow.mesh.rotation, 0.1, { z: this.sprites.arrow.mesh.rotation.z }, { z: 0 });
         }
     }
 
@@ -251,7 +250,7 @@ export class RouletteGame
     {
         this.time = 0;
         this.CurrentGameState = GameState.idle;
-        this.offset = this.sprites.number_pad.material.rotation / (Math.PI * 2);
+        this.offset = this.sprites.number_pad.mesh.rotation.z / (Math.PI * 2);
         this.arrow.frequency = 0;
         console.log('Start Arrow Spin stopped!!!');
 
@@ -262,12 +261,11 @@ export class RouletteGame
 
     GetNumberBasedOnRotation()
     {
-        let index = Math.abs(Math.ceil(this.sprites.number_pad.material.rotation % (Math.PI * 2) / this.SingleNumberAngle - 0.01));
+        let index = Math.abs(Math.ceil(this.sprites.number_pad.mesh.rotation.z % (Math.PI * 2) / this.SingleNumberAngle - 0.01));
         if (index === 0)
         {
             return this.RouletteNumbers[0].toString();
         }
-
         return this.RouletteNumbers[this.RouletteNumbers.length - index].toString();
     }
 }

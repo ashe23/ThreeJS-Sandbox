@@ -4,6 +4,7 @@ uniform vec3 uEdgeColor;
 uniform vec3 uColor;
 uniform sampler2D sandTimeTexture;
 varying float vNoise;
+varying vec2 vUv;
 
 void main()
 {
@@ -12,8 +13,8 @@ void main()
         alpha = 0.0;
     }
 
-    vec3 materialColor = uColor/255.;
-    vec3 edgeColor = uEdgeColor/255.;
+    vec3 materialColor = uColor / 255.0;
+    vec3 edgeColor = uEdgeColor / 255.0;
 
     vec3 color = materialColor;
 
@@ -23,6 +24,7 @@ void main()
 
     vec4 diffuseColor = vec4( color, alpha );
     vec3 c = vec3(1.0, 1.0, 1.0);
-    // gl_FragColor = vec4(c, 1.0) * texture2D(sandTimeTexture, gl_PointCoord);
-    gl_FragColor = diffuseColor;
+    gl_FragColor = diffuseColor * texture2D(sandTimeTexture, vUv) * vec4(10.0, 10.0, 10.0,1.0);
+    // gl_FragColor = diffuseColor;
+    // gl_FragColor = texture2D(sandTimeTexture, vUv);
 }

@@ -51,7 +51,7 @@ export class TextRenderer
 
         this.canvasText.mesh = new THREE.Points(this.canvasText.geometry, this.canvasText.material);
 
-        this.wrapper.sceneOrtho.add(this.canvasText.mesh);
+        this.wrapper.textScene.add(this.canvasText.mesh);
 
         this.updateText();
     }
@@ -99,9 +99,6 @@ export class TextRenderer
     loop()
     {
         this.canvasText.material.uniforms.uTime.value = this.wrapper.clock.getElapsedTime();
-        // this.canvasText.material.uniforms.uOffset.value.set(-this.wrapper.width / 2, -this.wrapper.height / 2);
-
-        // this.canvasText.mesh.translateZ(-1 / 2 * Math.tan(this.wrapper.camera.fov / 360 * Math.PI) / this.wrapper.height);
     }
 
     play(duration)
