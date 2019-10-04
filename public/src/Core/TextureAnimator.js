@@ -1,35 +1,54 @@
 export class TextureAnimator
 {
-    constructor(texture, tileH, tileV, numTiles, tileDispDuration)
+    constructor(texture, rows, columns, tileDispDuration)
     {
         this.texture = texture;
-        this.tileH = tileH;
-        this.tileV = tileV;
-        this.numTiles = numTiles;
+        this.rows = rows;
+        this.columns = columns;
+        this.numTiles = this.rows * this.columns;
         this.tileDispDuration = tileDispDuration;
-        this.currentDispTime = 0;
-        this.currentTile = 0;
     }
 
     init()
     {
         this.texture.wrapS = this.texture.wrapT = THREE.RepeatWrapping;
-        this.texture.repeat.set(1 / this.tileH, 1 / this.tileV);
+        this.texture.repeat.set(1 / this.columns, 1 / this.rows);
     }
 
-    update(milis)
+    test(frame)
     {
-        this.currentDispTime += milis;
-        while (this.currentDispTime > this.tileDispDuration)
-        {
-            this.currentDispTime -= this.tileDispDuration;
-            this.currentTile++;
-            if (this.currentTile == this.numTiles)
-                this.currentTile = 0;
-            var currentColumn = this.currentTile % this.tileH;
-            this.texture.offset.x = currentColumn / this.tileH;
-            var currentRow = Math.floor(this.currentTile / this.tileH);
-            this.texture.offset.y = currentRow / this.tileV;
-        }
+        let offsetY = 1 / this.rows;
+        let offsetX = 1 / this.columns;
+
+        let FrameCoordX = frame % this.columns;
+        let FrameCoordY = this.rows - 1 -  (frame % this.rows);
+
+        console.log(frame, FrameCoordX, FrameCoordY);
+
+        let currentColumn = FrameCoordX * offsetX;
+        let currentRow = offsetY * (this.rows - FrameCoordY);
+
+        
+        this.texture.offset.x = currentColumn;
+        this.texture.offset.y = currentRow;
+    } 
+
+    loop(milis)
+    {
+        let frame = Math.floor(milis % this.numTiles);   
+        
+        let offsetY = 1 / this.rows;
+        let offsetX = 1 / this.columns;
+
+        let FrameCoordX = frame % this.columns;
+        let FrameCoordY = frame % this.rows;
+
+        console.log(frame, FrameCoordX, FrameCoordY);
+
+        let currentColumn = FrameCoordX * offsetX;
+        let currentRow = offsetY * (this.rows - 1 - FrameCoordY);
+
+        this.texture.offset.x = currentColumn;
+        this.texture.offset.y = currentRow;       
     }
 }

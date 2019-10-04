@@ -119,11 +119,7 @@ export class RouletteGame
         this.sprites.roulette3 = new DissolveSprite(this.wrapper, Sprites.roulette3.path, Sprites.roulette3.scale);
         this.sprites.lights = new DissolveSprite(this.wrapper, Sprites.roulette2.path, Sprites.roulette2.scale);
         this.sprites.arrow = new DissolveSprite(this.wrapper, Sprites.arrow.path, Sprites.arrow.scale, new THREE.Vector3(0, 250, 0));
-        this.sprites.sand_time = new DissolveSprite(this.wrapper, Sprites.sand_time.path, Sprites.sand_time.scale, new THREE.Vector3(-this.wrapper.width / 2 + 150, -this.wrapper.height / 2 + 80, 0));
-
-        // this.sprites.sand_time = SpriteLoader.load(sprites.sand_time.path, sprites.sand_time.scale);
-        // this.wrapper.spritesScene.add(this.sprites.sand_time);
-        // this.sprites.sand_time.center.set(8.5, 4.5);
+        // this.sprites.sand_time = new DissolveSprite(this.wrapper, Sprites.sand_time.path, Sprites.sand_time.scale, new THREE.Vector3(-this.wrapper.width / 2 + 150, -this.wrapper.height / 2 + 80, 0));
     }
 
     SpinLoop()
@@ -132,7 +128,6 @@ export class RouletteGame
         {
             this.time += this.step;
             this.Spin();
-
 
             if (this.time + 1 > this.SpinDuration)
             {
@@ -180,6 +175,11 @@ export class RouletteGame
         this.sprites.roulette3.appear();
         this.sprites.roulette1.appear();
         this.sprites.arrow.appear();
+        // this.sprites.sand_time.appear();
+
+        TweenMax.fromTo(this.sprites.roulette3.mesh.scale, 2, { x: 8 }, { x: 5 });
+        TweenMax.fromTo(this.sprites.roulette3.mesh.scale, 2, { y: 8 }, { y: 5 });
+        TweenMax.fromTo(this.sprites.roulette3.mesh.scale, 2, { z: 8 }, { z: 5 });
 
         setTimeout(() =>
         {
@@ -263,9 +263,13 @@ export class RouletteGame
 
         this.sprites.lights.disappear();
         this.sprites.number_pad.disappear();
-        this.sprites.roulette3.disappear();
+        // this.sprites.roulette3.disappear();
+        TweenMax.fromTo(this.sprites.roulette3.mesh.scale, 2, { x: 5 }, { x: 8 });
+        TweenMax.fromTo(this.sprites.roulette3.mesh.scale, 2, { y: 5 }, { y: 8 });
+        TweenMax.fromTo(this.sprites.roulette3.mesh.scale, 2, { z: 5 }, { z: 8 });
         this.sprites.roulette1.disappear();
         this.sprites.arrow.disappear();
+        // this.sprites.sand_time.disappear();
 
         // this.WinNumberText.playScaleAnim();
         // reseting game        

@@ -9,8 +9,9 @@ float plot(vec2 st, float pct) {
 }
 
 void main() {
-   vec3 color1 = vec3(1.0, 1.0, 1.0);
+   vec3 color1 = vec3(1.0, 0.0, 0.0);
+   vec3 color2 = vec3(0.83, 0.66, 0.18);
    
    vec4 ParticlePointTexture = texture2D(pointTexture, gl_PointCoord);
-   gl_FragColor = vec4(color1, 1.0) * ParticlePointTexture;
+   gl_FragColor = vec4(mix(color1, color2, sin(time * 0.5)), 1.0) * ParticlePointTexture;
 }
