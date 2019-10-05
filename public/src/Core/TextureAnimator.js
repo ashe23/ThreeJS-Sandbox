@@ -7,48 +7,60 @@ export class TextureAnimator
         this.columns = columns;
         this.numTiles = this.rows * this.columns;
         this.tileDispDuration = tileDispDuration;
+        this.time = 0;
+        this.frame = 0;
+        this.offsetX = 0;
+        this.offsetY = 0;
+        this.frameCount = 0;
     }
 
     init()
     {
         this.texture.wrapS = this.texture.wrapT = THREE.RepeatWrapping;
         this.texture.repeat.set(1 / this.columns, 1 / this.rows);
+
+        this.offsetX = 1 / this.columns;
+        this.offsetY = 1 / this.rows;
     }
 
     test(frame)
     {
-        let offsetY = 1 / this.rows;
-        let offsetX = 1 / this.columns;
+        this.frame = frame;
+        this.calculateOffsets();
+        // let FrameCoordX = frame % this.columns;
+        // let FrameCoordY = this.rows - 1 - (frame % this.rows);
 
-        let FrameCoordX = frame % this.columns;
-        let FrameCoordY = this.rows - 1 -  (frame % this.rows);
+        // let currentColumn = FrameCoordX * this.offsetX;
+        // let currentRow = this.offsetY * (this.rows - FrameCoordY);
 
-        console.log(frame, FrameCoordX, FrameCoordY);
+        // this.texture.offset.x = currentColumn;
+        // this.texture.offset.y = currentRow;
+    }
 
-        let currentColumn = FrameCoordX * offsetX;
-        let currentRow = offsetY * (this.rows - FrameCoordY);
+    calculateOffsets()
+    {
+        let FrameCoordX = this.frame % this.columns;
+        let FrameCoordY = this.frame % this.rows;
 
-        
+        let currentColumn = FrameCoordX * this.offsetX;
+        let currentRow = this.offsetY * (this.rows - 1 - FrameCoordY);
+
         this.texture.offset.x = currentColumn;
         this.texture.offset.y = currentRow;
-    } 
+    }
 
     loop(milis)
     {
-        let frame = Math.floor(milis % this.numTiles);   
-        
-        let offsetY = 1 / this.rows;
-        let offsetX = 1 / this.columns;
+        // this.frameCount++;
+        // if (this.frameCount > 6)
+        // {
+        //     this.frameCount = 0;
+        //     this.frame++;
+        // }
+        this.frame = Math.floor(milis % this.numTiles);
+        console.log(this.frame);
+        this.calculateOffsets();
+        // console.log(milis, this.frame);
 
-        let FrameCoordX = frame % this.columns;
-        let FrameCoordY = frame % this.rows;
-
-        console.log(frame, FrameCoordX, FrameCoordY);
-
-        let currentColumn = FrameCoordX * offsetX;
-        let currentRow = offsetY * (this.rows - 1 - FrameCoordY);
-
-        this.texture.offset.x = currentColumn;
-        this.texture.offset.y = currentRow;       
     }
 }

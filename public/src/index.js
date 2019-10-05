@@ -22,7 +22,7 @@ window.onload = () =>
     let explosionMaterial = new THREE.MeshBasicMaterial({ map: roulette_anim, transparent: true });
     let cubeGeometry = new THREE.PlaneGeometry(40, 40, 512);
     let cube = new THREE.Mesh(cubeGeometry, explosionMaterial);
-    cube.position.set(-90, -100, 0);
+    cube.position.set(-50, -97 , 0);
     cube.scale.set(0.8, 0.8, 0.8);
     wrapper.particlesScene.add(cube);
 
@@ -30,29 +30,26 @@ window.onload = () =>
     {
         TimerText.play();
         ta.init();
-        ta.test(18);
+        ta.test(53);
 
         // todo add some loading screen for this
         particles.init(wrapper);
         wrapper.particlesScene.add(particles.mesh);
 
-        // game.LoadRouletteSprites();
-        // game.StartCountDown();
+        game.LoadRouletteSprites();
+        game.StartCountDown();
     }
 
     wrapper.animate_callback = () =>
     {
-        // game.SpinLoop();
+        game.SpinLoop();
 
         particles.loop();
         TimerText.loop();
         WinNumberText.loop();
 
 
-        ta.loop(wrapper.clock.getElapsedTime() * 10);
-
-        // game.TextureAnimator.update(wrapper.clock.getDelta() * 1000);
-
+        // ta.loop(wrapper.clock.getElapsedTime());
     }
 
     wrapper.init();
